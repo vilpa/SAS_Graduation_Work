@@ -9,12 +9,12 @@ workspace "Memas" "Member Application Solution" {
         
 
         #External Systems
+        sap = softwareSystem "SAP" "" "External System"
+        quickbooks = softwareSystem "QuickBooks" "Accounting Software Package" "External System"
         appInsights = softwareSystem "Application Insights" "Monitors application-level logs and performance metrics" "External System"
         ssoSystem = softwareSystem "EPAM SSO System" "Provides Single Sign-On (SSO) authentication, enabling secure and seamless access for employees, suppliers, and travel managers across all portals. Ensures centralized user identity management and access control" "External System"
         emailSystem = softwareSystem "Email System" "Sends email notifications for booking confirmations, approvals, cancellations, and system updates" "External System"
         smsSystem = softwareSystem "SMS Gateway System" "Sends SMS alerts for critical notifications such as booking confirmations, rejections, or urgent travel updates" "External System"
-        ctcSystem = softwareSystem "Cost Tracking Center" "Financial management system used for tracking and managing project-related costs, budgets, and expenditures" "External System"
-        upsaSystem = softwareSystem "UPSA System" "System for managing employees' profiles, tracking their skills, experience, certifications, and project assignments" "External System"
         cosmosDB = softwareSystem "Event Store" "Stores structured data for reporting, ensuring efficient retrieval and generation of analytical insights" "Database"        
         database = softwareSystem "Database" "Stores structured data for policies, rules,regional requirements, ensuring efficient retrieval available items" "Database"
         transportBooking = softwareSystem "External Transport Booking System" "Allows users to search, compare, and book transport options in real-time" "External System"
@@ -22,7 +22,7 @@ workspace "Memas" "Member Application Solution" {
         searchSystem = softwareSystem "Search as a Service" "Azure AI Search. Index, search, and rank data. Enables location-based searches" "External System"
 
         #Internal System
-        bmsSystem = softwareSystem "Member Application Solution" "Software System" "Tracks Hotel and Transport booking.Allows access for employees, travel department, suppliers to manage confirmed bookings" {
+        memasSystem = softwareSystem "Member Application Solution" "Software System" "Tracks Hotel and Transport booking.Allows access for employees, travel department, suppliers to manage confirmed bookings" {
             #SPA
             itSupportSpaContainer = container "IT support SPA" "A management interface for IT administrators to monitor, troubleshoot, and configure system components, ensuring availability and security compliance" "Container: React"
             employeePortalSpaContainer = container "Employees Portal SPA" "Allows employees to view, manage, and confirm hotel and transport bookings. Provides seamless SSO access and feedback submission" "Container: React" 
@@ -30,6 +30,7 @@ workspace "Memas" "Member Application Solution" {
             suppliersPortalSpaContainer = container "Suppliers Portal SPA" "A web interface for third-party hotel and transport suppliers to manually upload booking availability, pricing, and other details. Supports manual booking handling" "Container: React" 
 
             #Services
+            productServiceContainer = container "Product Service" "Enables data owners to create, manage, and permission GIN data for product launches and inventory management." "Container: .NET Core, Azure Functions"
             notificationServiceContainer = container "Notification Service" "Manages and dispatches system notifications, ensuring timely alerts for booking status changes and approvals" "Container: .NET Core, Azure Functions"
             policiesConfigServiceContainer = container "Policies Configuration Service" {
                 description "A service responsible for managing system configurations, business rules, and policy changes dynamically, ensuring flexibility and adaptability" 
@@ -133,7 +134,7 @@ workspace "Memas" "Member Application Solution" {
             hotelServiceContainer = container "Hotel Service" "Manages hotel bookings by integrating with third-party hotel suppliers, processing availability, pricing, and manual uploads" "Container: NET Core, Azure Function"
             hotelTransportSuppliersServiceContainer = container "Hotel & Transport Suppliers Service" "Manages hotel bookings by integrating with third-party hotel suppliers, processing availability, pricing, and manual uploads" "Container: NET Core, Azure Function"
 
-                        travelMangersPortalSpaContainer = container "Travel mangers Portal SPA"  {
+            travelMangersPortalSpaContainer = container "Travel mangers Portal SPA"  {
                 description "A dedicated SPA for travel managers to oversee, approve, and manage bookings, configure system rules, and generate reports for cost tracking and optimization" 
                 technology "Container: React"
                 
@@ -178,7 +179,12 @@ workspace "Memas" "Member Application Solution" {
         transportSuppliers  -> suppliersPortalSpaContainer "Uses"
 
         #Systems
-        bmsSystem -> appInsights "Metrix, Logs, Streams"
+        sap -> productServiceContainer "Create, Manage Data"
+        quickbooks -> productServiceContainer "Create, Manage Data"
+        productServiceContainer -> sap "Import Data"
+        productServiceContainer -> quickbooks "Import Data"
+        
+        memasSystem -> appInsights "Metrix, Logs, Streams"
 
         itSupportSpaContainer -> ssoSystem "Login, Consent"
         ssoSystem -> itSupportSpaContainer "JWT"
@@ -198,10 +204,6 @@ workspace "Memas" "Member Application Solution" {
         notificationServiceContainer -> emailSystem "Sends email [SMTP]"
         notificationServiceContainer -> smsSystem "Sends messages [REST, HTTP]"
 
-        integrations -> ctcSystem "Gets contextual data[HTTPS, Json]"
-        ctcSystem -> apiController "Initiate transaction [HTTPS, Json]"
-        integrations -> upsaSystem "Gets contextual data [HTTPS, Json]"
-
         reactorServiceContainer -> database "Update projections materialized views"
         database -> reportingServiceContainer "Queries"
 
@@ -220,7 +222,7 @@ workspace "Memas" "Member Application Solution" {
     }
 
     views {
-        systemContext bmsSystem {
+        systemContext memasSystem {
             
             include itsupport
             include employee
@@ -233,19 +235,19 @@ workspace "Memas" "Member Application Solution" {
             include ssoSystem
             include emailSystem
             include smsSystem
-            include ctcSystem
-            include upsaSystem
             include transportBooking
             include hotelBooking
             include searchSystem
+            include sap
+            include quickbooks
 
             #Internal System
-            include bmsSystem
+            include memasSystem
 
             autoLayout
         }
 
-        container bmsSystem {
+        container memasSystem {
             include itsupport
             include employee
             include travelDepartment
@@ -257,11 +259,11 @@ workspace "Memas" "Member Application Solution" {
             include ssoSystem
             include emailSystem
             include smsSystem
-            include ctcSystem
-            include upsaSystem
             include transportBooking
             include hotelBooking
             include searchSystem
+            include sap
+            include quickbooks
 
             #Internal System
             include itSupportSpaContainer
@@ -273,6 +275,7 @@ workspace "Memas" "Member Application Solution" {
             include notificationServiceContainer
             include policiesConfigServiceContainer
             include trxServiceContainer
+            include productServiceContainer
 
             include bookingServiceContainer
             
