@@ -1,308 +1,137 @@
-workspace "Memas" "Member Application Solution" {
+workspace "X-Customer Member Application" "C4 Model for Target Solution Architecture" {
+
+
     model {
-        #Actors
-        itsupport = person "IT Support" "a" "Person"
-        employee  = person "Employee" "" "Person"
-        travelDepartment = person "Travel Department"  "" "Person"
-        hotelSuppliers = person "Hotel Suppliers" "" "Person"
-        transportSuppliers = person "Transport Suppliers" "" "Person"
-        
+        user = person "Member User" "X-Customer member using the application"
+        admin = person "Company Administrator" "Admin users who manage accounts"
+        public = person "Public User" "General public accessing limited data"
 
-        #External Systems
-        sap = softwareSystem "SAP" "" "External System"
-        quickbooks = softwareSystem "QuickBooks" "Accounting Software Package" "External System"
-        appInsights = softwareSystem "Application Insights" "Monitors application-level logs and performance metrics" "External System"
-        ssoSystem = softwareSystem "EPAM SSO System" "Provides Single Sign-On (SSO) authentication, enabling secure and seamless access for employees, suppliers, and travel managers across all portals. Ensures centralized user identity management and access control" "External System"
-        emailSystem = softwareSystem "Email System" "Sends email notifications for booking confirmations, approvals, cancellations, and system updates" "External System"
-        smsSystem = softwareSystem "SMS Gateway System" "Sends SMS alerts for critical notifications such as booking confirmations, rejections, or urgent travel updates" "External System"
-        cosmosDB = softwareSystem "Event Store" "Stores structured data for reporting, ensuring efficient retrieval and generation of analytical insights" "Database"        
-        database = softwareSystem "Database" "Stores structured data for policies, rules,regional requirements, ensuring efficient retrieval available items" "Database"
-        transportBooking = softwareSystem "External Transport Booking System" "Allows users to search, compare, and book transport options in real-time" "External System"
-        hotelBooking = softwareSystem "External HotelBooking System" "Searches, books, and manages hotel reservations outside of an organization's internal system" "External System"
-        searchSystem = softwareSystem "Search as a Service" "Azure AI Search. Index, search, and rank data. Enables location-based searches" "External System"
+        enterprise_identity = softwareSystem "Enterprise Identity Provider" "Handles authentication via SSO, OAuth2, SAML"
+        external_identity = softwareSystem "External IdPs (Google, Microsoft, Okta)" "Handles authentication via SSO, OAuth2, SAML"
+        sap = softwareSystem "SAP" "External ERP system"
+        quickbooks = softwareSystem "QuickBooks" "External financial system"
+        help_portal = softwareSystem "Help Resources" "External training and help content platform"
+        key_vault = softwareSystem "Azure Key Vault" "Secure secret and credential storage"
+        azure_monitor = softwareSystem "Azure Monitor" "Observability and metrics platform"
+        graph_db = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures"
 
-        #Internal System
-        memasSystem = softwareSystem "Member Application Solution" "Software System" "Tracks Hotel and Transport booking.Allows access for employees, travel department, suppliers to manage confirmed bookings" {
-            #SPA
-            itSupportSpaContainer = container "IT support SPA" "A management interface for IT administrators to monitor, troubleshoot, and configure system components, ensuring availability and security compliance" "Container: React"
-            employeePortalSpaContainer = container "Employees Portal SPA" "Allows employees to view, manage, and confirm hotel and transport bookings. Provides seamless SSO access and feedback submission" "Container: React" 
-
-            suppliersPortalSpaContainer = container "Suppliers Portal SPA" "A web interface for third-party hotel and transport suppliers to manually upload booking availability, pricing, and other details. Supports manual booking handling" "Container: React" 
-
-            #Services
-            productServiceContainer = container "Product Service" "Enables data owners to create, manage, and permission GIN data for product launches and inventory management." "Container: .NET Core, Azure Functions"
-            notificationServiceContainer = container "Notification Service" "Manages and dispatches system notifications, ensuring timely alerts for booking status changes and approvals" "Container: .NET Core, Azure Functions"
-            policiesConfigServiceContainer = container "Policies Configuration Service" {
-                description "A service responsible for managing system configurations, business rules, and policy changes dynamically, ensuring flexibility and adaptability" 
-                technology  "Container: NET Core, Azure Function"
-
-                polApiController = component "API Controllers" {
-                    description "REST endpoints to configure and query policies"
-                    technology "ASP.NET Core Web API"
-                }
-
-                ruleEditor = component "Rule Management Module" {
-                    description "UI logic for defining and updating policy rules"
-                }
-
-                configManager = component "Policy Configuration Manager" {
-                    description "Handles saving, validating and versioning of policy settings"
-                }
-
-                polRepo = component "Configuration Repository" {
-                    description "Persists rules and settings"
-                    technology "Azure Cosmos DB or App Configuration"
-                }
-
-                validationEngine = component "Validation Engine" {
-                    description "Validates rule logic and detects conflicts"
-                }
-
-                polRepo -> database "Policies and Rules [CRUD]"
-
-                polApiController -> ruleEditor "Triggers configuration flow"
-                ruleEditor -> configManager "Saves/updates rules via"
-                configManager -> validationEngine "Validates policy data"
-                configManager -> polRepo "Reads/Writes to"
-
-            }
-
-            trxServiceContainer = container "Transaction Engine Service" "Handles requests processing, booking transactions, and financial reporting to ensure accurate and secure financial operations" "Container: NET Core, Azure Function" {
-                apiController = component "API Controllers" {
-                    description "REST endpoints to handle SPA requests"
-                    technology "ASP.NET Core Web API"
-                }
-
-                commandHandlers = component "Command Handlers" {
-                    description "Handle commands like CreateBooking"
-                    technology "MediatR"
-                }
-
-                eventHandlers = component "Event Handlers" {
-                    description "Handle domain and integration events"
-                }
-
-                domainLogic = component "Business Logic Implementation" {
-                    description "Implements booking rules, workflows"
-                }
-
-                repo = component "Database Repository" {
-                    description "Persist booking and transport states"
-                    technology "SQL DB"
-                }
-
-                eventStore = component "Event Store Repository" {
-                    description "Stores domain events"
-                    technology "Cosmos DB append-only store"
-                }
-
-                changeFeedListener = component "Cosmos DB Feed Processor" {
-                    description "Triggers domain logic on data changes"
-                }
-
-                integrations = component "External Services Integration" {
-                    description "Handles calls to CTC, UPSA"
-                    technology "REST Clients"
-                }
-
-                cosmosDB -> changeFeedListener "Listen to"
-                eventStore -> cosmosDB
-
-                apiController -> commandHandlers "Dispatches commands to"
-                apiController -> domainLogic "Delegates to"
-                commandHandlers -> domainLogic "Uses"
-                domainLogic -> repo "Persists data using"
-                repo -> database
-                domainLogic -> eventStore "Publishes domain events"
-                changeFeedListener -> eventHandlers "Triggers"
-                eventHandlers -> domainLogic "Executes logic"
-                eventHandlers -> integrations "Sends/receives data from"
-
-                # travelMangersPortalSpaContainer -> apiController "Get transactions data [REST]"
-                itSupportSpaContainer -> apiController "Get dashboard data,set configuration [REST]"        
-                employeePortalSpaContainer -> apiController "Set transactions data, track statuses [REST]"
-                
-                domainLogic -> polApiController "Gets transactions policies"
-
-            }
-
-            bookingServiceContainer = container "Booking Service" "Manages hotel bookings by integrating with third-party hotel suppliers, processing availability, pricing, and manual uploads" "Container: NET Core, Azure Function"
+        xsystem = softwareSystem "X-Customer Member Application" {
+            description "Modular platform to manage GIN, LN and shared data"
+            webapp = container "Web Application" "React SPA" "Delivers UI via Azure Front Door and CDN"
+            api = container "API Layer" "REST APIs with .NET 8" "Main business logic and orchestration"
             
-            reportingServiceContainer = container "Reporting Service" "Generates reports related to bookings, suppliers, financial transactions, and user activities" "Container: .NET Core, PowerBI"
-            reactorServiceContainer = container "Reactor Service" "Aggregates reports related data to bookings, suppliers, financial transactions, and user activities" "Container: NET Core, Azure Function" 
-            transportServiceContainer = container "Transport  Service" "Handles integration with transport providers like Uber, managing ride bookings, pickup/drop-off locations, and transport availability" "Container: NET Core, Azure Function" 
-            hotelServiceContainer = container "Hotel Service" "Manages hotel bookings by integrating with third-party hotel suppliers, processing availability, pricing, and manual uploads" "Container: NET Core, Azure Function"
-            hotelTransportSuppliersServiceContainer = container "Hotel & Transport Suppliers Service" "Manages hotel bookings by integrating with third-party hotel suppliers, processing availability, pricing, and manual uploads" "Container: NET Core, Azure Function"
+            userMgmt = container "User Management Service" "Role-based access, SSO integration" {
+                ssoa = component "SSO Auth Handler" "Handles SSO authentication using OAuth2 and SAML protocols"
+                flogin = component "Federated Login Adapter" "Manages authentication with external IdPs like Google, Microsoft, Okta"
+                uprfm = component "User Profile Manager" "CRUD operations for user profiles and preferences"
+                rbac = component "Role & Permission Engine" "Defines and enforces user roles and RBAC policies"
+                pswm = component "Password Management Service" "Handles password reset, expiration policies, and recovery workflows"
 
-            travelMangersPortalSpaContainer = container "Travel mangers Portal SPA"  {
-                description "A dedicated SPA for travel managers to oversee, approve, and manage bookings, configure system rules, and generate reports for cost tracking and optimization" 
-                technology "Container: React"
-                
-                bookingView = component "Booking Management View" {
-                    description "Displays, edits and manages booking statuses"
+                group Sidecar {
+                    iauth = component "Auth Proxy Interface" "Validates and proxies SSO login requests"
+                    fedadapter = component "Federation Adapter" "Handles integration with external identity providers"
+                    secrets = component "Secrets Loader" "Fetches secrets/configs from Azure Key Vault"
+                    logger = component "Audit Logger" "Sends authentication and user change audit events"
+                    metrix = component "Metrics Exporter" "Pushes login and performance metrics to Azure Monitor"
+                    notification = component "Notification Dispatcher" "Sends password reset and other events to Notification Service"
                 }
 
-                supplierView = component "Supplier Configuration View" {
-                    description "Manages supplier data uploads and overrides"
-                }
-
-                policyView = component "Policy Rules Configuration View" {
-                    description "UI to manage booking and prioritization rules"
-                }
-
-                reportingView = component "Reporting Dashboard" {
-                    description "Displays financial and supplier booking reports"
-                }
-
-                apiGateway = component "Backend API Gateway / BFF" {
-                    description "Forwards API requests to backend services"
-                    technology ".NET BFF or API Gateway"
-                }
-
-                bookingView -> apiGateway "Sends booking actions"
-                supplierView -> apiGateway "Sends supplier updates"
-                policyView -> apiGateway "Manages policy rules"
-                reportingView -> apiGateway "Fetches report data"
-                apiGateway -> apiController
-
+                db = component "SQL Database" "User Management schema" "SQLServer" "Database"
             }
 
+            prefix_mgmt = container "Prefix Management Service" "Manages company prefixes"
+            gin_mgmt = container "GIN Management Service" "Create/edit GINs and hierarchies"
+            ln_mgmt = container "LN Management Service" "Manage locations and LNs"
+            data_access = container "Data Access Service" "Search/view/subscribe to published data"
+            notify = container "Notification Service" "Handles all notifications and preferences"
+            reports = container "Reporting Service" "Scheduled reports, audit, usage logs"
+            feedback = container "Help & Feedback Service" "Routes user feedback, shows help links"
+            integration = container "Integration Gateway" "Gateway to third-party systems (SAP, QuickBooks)"
+
+            # userMgmt internal dependencies
+            ssoa -> flogin "Delegates to appropriate external IdP based on login request"
+            ssoa -> uprfm "Retrieves or creates user profile post-authentication"
+            uprfm -> rbac "Resolves user’s role to determine access rights"
+            pswm -> uprfm "Updates/reset passwords and recovery tokens"
+
+            # userMgmt external dependencies
+            ssoa -> enterprise_identity "OAuth2/SAML. Authenticate user identity"
+            flogin -> external_identity "OpenID Connect/SAML. Support federated login flows"
+            uprfm -> db "SQL via ORM. Store/retrieve user profile info"
+            rbac -> api "HTTP Headers/Claims. Attach or interpret RBAC claims in tokens"
+            pswm -> notify "Azure Service Bus Event. Notify user via email/SMS about password changes"
+
+            messaging = container "Messaging Bus" "Azure Service Bus/Event Grid" "Asynchronous messaging"
+            monitor = container "Monitoring Stack" "Azure Monitor, App Insights, Log Analytics"
+
+            user -> xsystem "Uses"
+            admin -> xsystem "Manages roles and data"
+            public -> xsystem "Searches public data"
+            xsystem -> enterprise_identity "Federated login and authentication"
+            xsystem -> sap "Integration via API"
+            xsystem -> quickbooks "Integration via API"
+            xsystem -> help_portal "Link to help and training content"
+
+            user -> webapp "Uses"
+            webapp -> api "Communicates via REST"
+            api -> userMgmt
+            api -> prefix_mgmt
+            api -> gin_mgmt
+            api -> ln_mgmt
+            api -> data_access
+            api -> notify
+            api -> reports
+            api -> feedback
+            api -> integration
+
+            api -> db
+            api -> messaging
+            messaging -> notify
+            messaging -> reports
+            messaging -> integration
+            
+            integration -> sap
+            integration -> quickbooks
+            feedback -> help_portal
         }
-
-        #Relationships
-        #Users
-        itsupport -> itSupportSpaContainer "Uses"
-        itsupport -> appInsights "View Logs, Dashboards"
-        employee  -> employeePortalSpaContainer "Uses"
-        travelDepartment  -> travelMangersPortalSpaContainer "Uses"
-        hotelSuppliers  -> suppliersPortalSpaContainer "Uses"
-        transportSuppliers  -> suppliersPortalSpaContainer "Uses"
-
-        #Systems
-        sap -> productServiceContainer "Create, Manage Data"
-        quickbooks -> productServiceContainer "Create, Manage Data"
-        productServiceContainer -> sap "Import Data"
-        productServiceContainer -> quickbooks "Import Data"
-        
-        memasSystem -> appInsights "Metrix, Logs, Streams"
-
-        itSupportSpaContainer -> ssoSystem "Login, Consent"
-        ssoSystem -> itSupportSpaContainer "JWT"
-        
-        employeePortalSpaContainer -> ssoSystem "Login, Consent"
-        ssoSystem -> employeePortalSpaContainer "JWT"
-        
-        travelMangersPortalSpaContainer -> ssoSystem "Login, Consent"
-        travelMangersPortalSpaContainer -> polApiController "Set policies data and flow configuration REST"
-        travelMangersPortalSpaContainer -> reportingServiceContainer "Get BI reports"
-        travelMangersPortalSpaContainer -> bookingServiceContainer "Modifying, canceling travel bookings,retrieving availability, pricing information REST"
-        ssoSystem -> travelMangersPortalSpaContainer "JWT"
-
-        suppliersPortalSpaContainer -> ssoSystem "Login, Consent"
-        ssoSystem -> suppliersPortalSpaContainer "JWT"
-
-        notificationServiceContainer -> emailSystem "Sends email [SMTP]"
-        notificationServiceContainer -> smsSystem "Sends messages [REST, HTTP]"
-
-        reactorServiceContainer -> database "Update projections materialized views"
-        database -> reportingServiceContainer "Queries"
-
-        bookingServiceContainer -> transportServiceContainer "Check availability, book transportation, update transport details for a reservation"
-        bookingServiceContainer -> hotelServiceContainer "Check room availability, reserve rooms, or update booking details"
-        bookingServiceContainer -> hotelTransportSuppliersServiceContainer "Check availability,reservation,update booking details"
-        bookingServiceContainer -> cosmosDB "Updating reservations, confirming reservations, updating booking status"
-    
-        hotelTransportSuppliersServiceContainer -> database "Room, transport details,policies, availability [CRUD]"
-        hotelTransportSuppliersServiceContainer -> searchSystem 
-
-        hotelServiceContainer -> searchSystem
-        hotelServiceContainer -> hotelBooking "Real-time data, booking, and updates"
-    
-        transportServiceContainer -> transportBooking "Real-time data, booking, and updates"
     }
 
     views {
-        systemContext memasSystem {
-            
-            include itsupport
-            include employee
-            include travelDepartment
-            include hotelSuppliers
-            include transportSuppliers
-            
-            #External Systems
-            include appInsights
-            include ssoSystem
-            include emailSystem
-            include smsSystem
-            include transportBooking
-            include hotelBooking
-            include searchSystem
-            include sap
-            include quickbooks
-
-            #Internal System
-            include memasSystem
-
-            autoLayout
-        }
-
-        container memasSystem {
-            include itsupport
-            include employee
-            include travelDepartment
-            include hotelSuppliers
-            include transportSuppliers
-            
-            #External Systems
-            include appInsights
-            include ssoSystem
-            include emailSystem
-            include smsSystem
-            include transportBooking
-            include hotelBooking
-            include searchSystem
-            include sap
-            include quickbooks
-
-            #Internal System
-            include itSupportSpaContainer
-            include employeePortalSpaContainer
-            include travelMangersPortalSpaContainer
-            include suppliersPortalSpaContainer
-
-            #Services
-            include notificationServiceContainer
-            include policiesConfigServiceContainer
-            include trxServiceContainer
-            include productServiceContainer
-
-            include bookingServiceContainer
-            
-            include reportingServiceContainer
-            include reactorServiceContainer
-            include transportServiceContainer
-            include hotelServiceContainer
-            include hotelTransportSuppliersServiceContainer
-
-            autoLayout
-        }
-
-        component "trxServiceContainer" {
+        systemcontext xsystem "SystemContext" {
             include *
-            autoLayout
+            autolayout
         }
 
-        component "policiesConfigServiceContainer" {
+        container xsystem "ContainerDiagram" {
             include *
-            autoLayout
+            autolayout
         }
 
-        component "travelMangersPortalSpaContainer" {
+        component userMgmt "Components" {
             include *
-            autoLayout
+            autolayout
         }
 
+/*
+        component gin_mgmt "GIN Management Components" {
+            component "GIN Editor" "Create/edit GINs"
+            component "Barcode Generator" "Generates barcodes"
+            component "GIN Hierarchy Manager" "Manage parent-child relations"
+        }
+
+        component ln_mgmt "LN Management Components" {
+            component "LN Editor" "Create/edit LNs"
+            component "Hierarchy Manager" "Location relationships"
+            component "Status Tracker" "LN lifecycle management"
+        }
+
+        component data_access "Data Access Components" {
+            component "Search Engine" "Advanced filtering and search"
+            component "Subscription Engine" "Subscribe to published data"
+            component "Access Validator" "Controls visibility by role/subscription"
+        }
+        */
+        
         styles {
             element "Person" {
                 color #ffffff
@@ -310,17 +139,14 @@ workspace "Memas" "Member Application Solution" {
                 shape Person
             }
             element "Customer" {
-                background #686868
+                background #08427b
             }
             element "Bank Staff" {
-                background #08427B
+                background #999999
             }
             element "Software System" {
                 background #1168bd
                 color #ffffff
-            }
-            element "External System" {
-                background #686868
             }
             element "Existing System" {
                 background #999999
