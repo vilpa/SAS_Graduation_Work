@@ -164,3 +164,12 @@ workspace "X-Customer Member Application" "C4 Model for Target Solution Architec
         }
     }
 }
+
+
+
+"Authentication/Authorization"
+"Prefixes Branch"
+"Product Branch"
+"Location Branch"
+"Search/Reporting Branch"
+"Help/Tutorials Branch"
