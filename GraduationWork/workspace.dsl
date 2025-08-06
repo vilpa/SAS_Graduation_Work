@@ -141,10 +141,34 @@ container <name> [description] [technology] [tags] {
                     rbac = component "Role & Permission Engine" "Defines and enforces user roles and RBAC policies"
                     pswm = component "Password Management Service" "Handles password reset, expiration policies, and recovery workflows"
                     
-                    db = component "SQL Database" "User Management schema" "SQLServer" "Database"
+                    udbs = component "SQL Database" "User Management schema" "SQLServer" "Database"
                 }
     
-                prefix_mgmt = container "Prefix Management Service" "Manages company prefixes"
+                prefixMgmt = container "Prefix Management Service" {
+                    technology ".NET 8"
+                    description "Handles prefix licensing, capacity tracking, and lookup for GIN and LN creation"
+                    tags "Core, Data"
+
+                    pfstore = component "Prefix Store" "Manages CRUD operations for company prefixes and associated metadata"
+                    capctr = component "Capacity Tracker" "Tracks numeric indicator usage (GINs/LNs) and available capacity per prefix"
+                    prefxval = component "Prefix Validator" "Validates prefix format and compliance with business rules"
+                    pfpubsub = component "Prefix Publish & Subscribe Engine" "Manages visibility and sharing of prefix data with other members"
+                    pfsearch = component "Prefix Search Service" "Handles advanced search, filtering, and lookup for prefix-related data"
+                    pfimport = component "Prefix Import/Export Adapter" "Imports/exports prefix records in formats like CSV, XML, Excel"
+
+                    pdbs = component "SQL. Prefix Management Schema" "Prefix Management schema for storing licensed prefixes, attributes, and usage data" "SQLServer" "Database"
+
+                    // External Interactions
+                    /*
+                    prefixMgmt -> userMgmt.rbac "authorize prefix access"
+                    prefixMgmt -> accessData "shares prefix data for search & viewing"
+                    prefixMgmt -> productMgmt "provides prefix data for GIN generation"
+                    prefixMgmt -> locationMgmt "provides prefix data for LN generation"
+                    prefixMgmt -> notifService "sends notifications for usage thresholds, validation errors"
+                    prefixMgmt -> auditTrail "logs all prefix updates and access events"
+                    */
+                }
+
                 gin_mgmt = container "GIN Management Service" "Create/edit GINs and hierarchies"
                 ln_mgmt = container "LN Management Service" "Manage locations and LNs"
                 data_access = container "Data Access Service" "Search/view/subscribe to published data"
@@ -168,8 +192,6 @@ container <name> [description] [technology] [tags] {
                     metrix -> azure_monitor
                     notification -> messaging "emmits events"
                     messaging -> notification "listents to subscriptions"
-
-                    userMgmt -> sidecar
                 }
             }
 
@@ -182,7 +204,7 @@ container <name> [description] [technology] [tags] {
             # userMgmt external dependencies
             ssoa -> enterprise_identity "OAuth2/SAML. Authenticate user identity"
             flogin -> external_identity "OpenID Connect/SAML. Support federated login flows"
-            uprfm -> db "SQL via ORM. Store/retrieve user profile info"
+            uprfm -> udbs "SQL via ORM. Store/retrieve user profile info"
             pswm -> notify "Azure Service Bus Event. Notify user via email/SMS about password changes"
 
             xsystem -> enterprise_identity "Federated login and authentication"
