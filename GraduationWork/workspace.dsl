@@ -20,6 +20,7 @@ container <name> [description] [technology] [tags] {
         
         key_vault = softwareSystem "Azure Key Vault" "Secure secret and credential storage"
         azure_monitor = softwareSystem "Azure Monitor" "Observability and metrics platform"
+        
         graph_db = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures"
 
         xsystem = softwareSystem "X-Customer Member Application" {
@@ -114,43 +115,63 @@ container <name> [description] [technology] [tags] {
                 webauth -> webfeedback "authorize and redirect"
                 webauth -> webaudit "authorize and redirect"
 
+                webauth -> enterprise_identity "authenticates user"
+                webauth -> external_identity "authenticates user"
+
                 user -> webauth "Login"
                 puser -> webauth "Login"
                 admin -> webauth "Login"
                 public -> webauth "Login"
             }
-
-            api = container "API Layer" "REST APIs with .NET 8" "Main business logic and orchestration"
             
-            userMgmt = container "User Management Service" "Role-based access, SSO integration" {
-                ssoa = component "SSO Auth Handler" "Handles SSO authentication using OAuth2 and SAML protocols"
-                flogin = component "Federated Login Adapter" "Manages authentication with external IdPs like Google, Microsoft, Okta"
-                uprfm = component "User Profile Manager" "CRUD operations for user profiles and preferences"
-                rbac = component "Role & Permission Engine" "Defines and enforces user roles and RBAC policies"
-                pswm = component "Password Management Service" "Handles password reset, expiration policies, and recovery workflows"
-                
-                db = component "SQL Database" "User Management schema" "SQLServer" "Database"
+            api = container "API Layer" "REST APIs with .NET 8" "Main business logic and orchestration"
+
+            messaging = container "Messaging Bus" "Azure Service Bus/Event Grid" "Asynchronous messaging"
+            monitor = container "Monitoring Stack" "Azure Monitor, App Insights, Log Analytics"
+            
+            group "Core Services" {
+                userMgmt = container "User Management Service" {
+                    technology ".NET 8"
+                    description "Role-based access, SSO integration"
+                    tags "Core, Utility, Shared"
+
+                    ssoa = component "SSO Auth Handler" "Handles SSO authentication using OAuth2 and SAML protocols"
+                    flogin = component "Federated Login Adapter" "Manages authentication with external IdPs like Google, Microsoft, Okta"
+                    uprfm = component "User Profile Manager" "CRUD operations for user profiles and preferences"
+                    rbac = component "Role & Permission Engine" "Defines and enforces user roles and RBAC policies"
+                    pswm = component "Password Management Service" "Handles password reset, expiration policies, and recovery workflows"
+                    
+                    db = component "SQL Database" "User Management schema" "SQLServer" "Database"
+                }
+    
+                prefix_mgmt = container "Prefix Management Service" "Manages company prefixes"
+                gin_mgmt = container "GIN Management Service" "Create/edit GINs and hierarchies"
+                ln_mgmt = container "LN Management Service" "Manage locations and LNs"
+                data_access = container "Data Access Service" "Search/view/subscribe to published data"
+                notify = container "Notification Service" "Handles all notifications and preferences"
+                reports = container "Reporting Service" "Scheduled reports, audit, usage logs"
+                feedback = container "Help & Feedback Service" "Routes user feedback, shows help links"
+                integration = container "Integration Gateway" "Gateway to third-party systems (SAP, QuickBooks)"
+
+                sidecar = container "Sidecar" {
+                    technology ".NET 8"
+                    description "Shared utility functions such as Key Vault access, centralized logging, event-based notifications"
+                    tags "Core, Utility, Shared"
+
+                    secrets = component "Secrets Loader" "Fetches secrets/configs from Azure Key Vault"
+                    logger = component "Audit Logger" "Sends authentication and user change audit events"
+                    metrix = component "Metrics Exporter" "Pushes login and performance metrics to Azure Monitor"
+                    notification = component "Notification Dispatcher" "Sends password reset and other events to Notification Service"
+
+                    secrets -> key_vault
+                    logger -> azure_monitor
+                    metrix -> azure_monitor
+                    notification -> messaging "emmits events"
+                    messaging -> notification "listents to subscriptions"
+
+                    userMgmt -> sidecar
+                }
             }
-
-            sidecar = container "Sidecar" {
-                technology ".NET 8"
-                description "Shared utility functions such as Key Vault access, centralized logging, event-based notifications"
-                tags "Core, Utility, Shared"
-
-                secrets = component "Secrets Loader" "Fetches secrets/configs from Azure Key Vault"
-                logger = component "Audit Logger" "Sends authentication and user change audit events"
-                metrix = component "Metrics Exporter" "Pushes login and performance metrics to Azure Monitor"
-                notification = component "Notification Dispatcher" "Sends password reset and other events to Notification Service"
-            }
-
-            prefix_mgmt = container "Prefix Management Service" "Manages company prefixes"
-            gin_mgmt = container "GIN Management Service" "Create/edit GINs and hierarchies"
-            ln_mgmt = container "LN Management Service" "Manage locations and LNs"
-            data_access = container "Data Access Service" "Search/view/subscribe to published data"
-            notify = container "Notification Service" "Handles all notifications and preferences"
-            reports = container "Reporting Service" "Scheduled reports, audit, usage logs"
-            feedback = container "Help & Feedback Service" "Routes user feedback, shows help links"
-            integration = container "Integration Gateway" "Gateway to third-party systems (SAP, QuickBooks)"
 
             # userMgmt internal dependencies
             ssoa -> flogin "Delegates to appropriate external IdP based on login request"
@@ -162,11 +183,7 @@ container <name> [description] [technology] [tags] {
             ssoa -> enterprise_identity "OAuth2/SAML. Authenticate user identity"
             flogin -> external_identity "OpenID Connect/SAML. Support federated login flows"
             uprfm -> db "SQL via ORM. Store/retrieve user profile info"
-            rbac -> api "HTTP Headers/Claims. Attach or interpret RBAC claims in tokens"
             pswm -> notify "Azure Service Bus Event. Notify user via email/SMS about password changes"
-
-            messaging = container "Messaging Bus" "Azure Service Bus/Event Grid" "Asynchronous messaging"
-            monitor = container "Monitoring Stack" "Azure Monitor, App Insights, Log Analytics"
 
             xsystem -> enterprise_identity "Federated login and authentication"
             xsystem -> sap "Integration via API"
@@ -174,21 +191,6 @@ container <name> [description] [technology] [tags] {
             xsystem -> help_portal "Link to help and training content"
 
             webapp -> api "Communicates via REST"
-            api -> userMgmt
-            api -> prefix_mgmt
-            api -> gin_mgmt
-            api -> ln_mgmt
-            api -> data_access
-            api -> notify
-            api -> reports
-            api -> feedback
-            api -> integration
-
-            api -> db
-            api -> messaging
-            messaging -> notify
-            messaging -> reports
-            messaging -> integration
             
             integration -> sap
             integration -> quickbooks
@@ -214,7 +216,6 @@ container <name> [description] [technology] [tags] {
 
         component webapp "WebAppComponents" {
             include *
-            autoLayout lr 500 500
         }
 
 /*
@@ -242,6 +243,7 @@ container <name> [description] [technology] [tags] {
                 color #ffffff
                 fontSize 22
                 shape Person
+                background #08427b
             }
             element "Customer" {
                 background #08427b
