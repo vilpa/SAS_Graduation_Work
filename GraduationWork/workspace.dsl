@@ -292,16 +292,37 @@ container <name> [description] [technology] [tags] {
                     lnver -> lgdb "stores verification flags and logs"
                 }
 
-
-                accessData = container "Data Access Service" {
-                    description "Search/view/subscribe to published data"
+                accessData = container "Access Data Service" {
                     technology ".NET 8"
-                    tags "Core, DataAccess"
+                    description "Provides search, view, subscription, and export functionality for shared Prefix, GIN, and LN data"
+                    tags "Core, Consumer, Search"
 
-                    pfpubsub -> accessData "publishes prefix data for external view"
-                    ginshare -> accessData "exposes data to subscribers"
-                    lnshare -> accessData "exposes location data for viewing"
+                    adsearch = component "Access Search Engine" "Performs advanced search and filtering across Prefix, GIN, and LN datasets"
+                    adview = component "Record Viewer" "Displays record details, including basic/full data and hierarchy"
+                    adsub = component "Subscription Manager" "Handles subscription requests for accessing full record views"
+                    adgroup = component "Group Access Controller" "Processes join requests for controlled access groups"
+                    adexport = component "Export Adapter" "Exports selected records to formats like CSV, Excel, XML, and prints"
+                    adaccess = component "Access Rights Evaluator" "Determines data access level based on user's subscription, group membership, or public access"
+                    adpay = component "Ad-hoc Access Info Module" "Informs users about external payment options for access (outside of system)"
+                    
+                    esdb = component "Read-Optimized Vector Database" {
+                        description "Indexed subset of shared Prefix, GIN, and LN records, optimized for fast queries"
+                        technology "Elasticsearch"
+                        tags "Database" 
+                    }
+                    
+                    /*
+                    kv = component "Key Vault Reader" "Retrieves secure config such as API keys or export format settings" "Azure Key Vault" "Infrastructure"
+                    */
+
+                    // External Interactions
+                    accessData -> rbac "authenticates and authorizes user access to record data"
+                    accessData -> pfpubsub "retrieves published prefix data"
+                    accessData -> ginshare "retrieves published GINs and hierarchies"
+                    accessData -> lnshare "retrieves published LN records and hierarchies"
+                    
                 }
+
                 
                 notify = container "Notification Service" {
                     technology ".NET 8"
@@ -313,6 +334,7 @@ container <name> [description] [technology] [tags] {
                     ginMgmt -> notify "sends notifications for status updates, duplicates, errors"
                     ginstore -> notify "sends user notifications"
                     lnver -> notify "sends verification reminders to users"
+                    accessData -> notify "sends notifications for new subscriptions, approvals, or record updates"
                 }
 
                 reports = container "Reporting Service" "Scheduled reports, audit, usage logs"
@@ -386,13 +408,12 @@ container <name> [description] [technology] [tags] {
             include *
             autolayout
         }
-/*
-        component data_access "Data Access Components" {
-            component "Search Engine" "Advanced filtering and search"
-            component "Subscription Engine" "Subscribe to published data"
-            component "Access Validator" "Controls visibility by role/subscription"
+
+        component accessData "AccessDataComponents" {
+            include *
+            autolayout
         }
-        */
+        
         
         styles {
             element "Person" {
