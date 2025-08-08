@@ -10,6 +10,7 @@ container <name> [description] [technology] [tags] {
         admin = person "Member Administrator" "Member Admin user who manage account"
         puser = person "Proxy User" "X-Customer Admin user who view/manage account on behalf of Member user"
         public = person "Public User" "General public accessing limited data"
+        apimAdmin = person "X-Customer Engineer" "General public accessing limited data, logging, management"
 
         enterprise_identity = softwareSystem "Enterprise Identity Provider" "Handles authentication via SSO, OAuth2, SAML"
         external_identity = softwareSystem "External IdPs (Google, Microsoft, Okta)" "Handles authentication via SSO, OAuth2, SAML"
@@ -18,7 +19,7 @@ container <name> [description] [technology] [tags] {
         quickbooks = softwareSystem "QuickBooks" "External financial system"
         help_portal = softwareSystem "Help Resources" "External training and help content platform"
         
-        key_vault = softwareSystem "Azure Key Vault" "Secure secret and credential storage"
+        key_vault = softwareSystem "Azure Key Vault" "Secure secret and credential storage" "KeyVault"
         azure_monitor = softwareSystem "Azure Monitor" "Observability and metrics platform"
         
         graph_db = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures"
@@ -124,10 +125,41 @@ container <name> [description] [technology] [tags] {
                 public -> webauth "Login"
             }
             
-            api = container "API Layer" "REST APIs with .NET 8" "Main business logic and orchestration"
+            apiGateway = container "API Gateway" {
+                technology "Azure API Management"
+                description "Central entry point for all RESTful APIs; enforces policies, routing, throttling, monitoring, and legacy 3Scale migration"
+                tags "Infrastructure, Gateway, Azure"
+
+                configmgr = component "3Scale Config Migrator" "Migrates existing API definitions, plans, rate limits, and policies from 3Scale to Azure API Management"
+                routing = component "API Router" "Routes requests to internal services (GIN, Location, Prefix, Access Data, User Mgmt) based on path, method, and version"
+                policy = component "Policy Enforcement Engine" "Applies throttling, quota, CORS, caching, IP filtering, and JWT validation policies"
+                analytics = component "Telemetry & Analytics Module" "Captures request metrics, logs, errors, and usage analytics for monitoring and reporting"
+                docportal = component "Developer Portal" "Provides auto-generated API documentation, testing sandbox, and subscription access to consumers"
+
+                // External Consumers
+                // apiGateway -> publicConsumer "allows public and registered users to access shared data"
+                // apiGateway -> partnerSystem "supports integration with external trading/retail partners via secure APIs"
+                
+                // Internal Services
+                // routing -> ginMgmt "routes product-related API calls"
+                // routing -> locationMgmt "routes location-related API calls"
+                // routing -> prefixMgmt "routes prefix-related API calls"
+                // routing -> accessData "routes search and subscription calls"
+                // routing -> userMgmt "routes authentication and profile management APIs"
+
+                // Other Interactions
+                configmgr -> apimAdmin "used by devops team to execute migration scripts from 3Scale to Azure"
+            }
+
 
             messaging = container "Messaging Bus" "Azure Service Bus/Event Grid" "Asynchronous messaging"
-            monitor = container "Monitoring Stack" "Azure Monitor, App Insights, Log Analytics"
+            
+            monitor = container "Monitoring Stack" {
+                description "Azure Monitor, App Insights, Log Analytics"
+                technology "Azure Monitor, App Insights, Log Analytics"
+
+                analytics -> monitor "sends logs and metrics to Azure Monitor or App Insights"
+            }
             
             group "Core Services" {
                 userMgmt = container "User Management Service" {
@@ -155,6 +187,7 @@ container <name> [description] [technology] [tags] {
                     ssoa -> enterprise_identity "OAuth2/SAML. Authenticate user identity"
                     flogin -> external_identity "OpenID Connect/SAML. Support federated login flows"
                     uprfm -> udbs "SQL via ORM. Store/retrieve user profile info"
+                    policy -> rbac "validates user tokens and claims (OAuth2, SAML)"
                 }
     
                 prefixMgmt = container "Prefix Management Service" {
@@ -225,6 +258,7 @@ container <name> [description] [technology] [tags] {
                     ginassign -> capctr "updates prefix usage after assignment"
                     ginassign -> ginval "verifies GIN uniqueness and structure"
                     ginassign -> ggdb "writes assigned GINs"
+                    ginassign -> barcodegen "generates barcodes"
 
                     ginval -> ggdb "cross-checks existing data for duplicates"
 
@@ -316,11 +350,35 @@ container <name> [description] [technology] [tags] {
                     */
 
                     // External Interactions
-                    accessData -> rbac "authenticates and authorizes user access to record data"
-                    accessData -> pfpubsub "retrieves published prefix data"
-                    accessData -> ginshare "retrieves published GINs and hierarchies"
-                    accessData -> lnshare "retrieves published LN records and hierarchies"
+                    adsearch -> esdb "queries shared Prefix, GIN, and LN records"
+                    adsearch -> adaccess "filters search results by access rights"
+
+                    adview -> esdb "loads record details and hierarchy"
+                    adview -> adaccess "determines full or basic view"
+                    adview -> adgroup "displays group membership info if restricted"
+                    adview -> adsub "offers option to request full access"
+
+                    adaccess -> rbac "retrieves user roles and permissions"
+                    adaccess -> pfpubsub "verifies prefix-level sharing"
+                    adaccess -> ginshare "retrieves published GINs and hierarchies"
+                    adaccess -> lnshare "retrieves published LN records and hierarchies"
+
+                    adsub -> rbac "identifies requesting user"
+                    adgroup -> rbac "validates group membership"
                     
+                    adexport -> esdb "retrieves and formats selected records"
+                    adexport -> adaccess "ensures user has export permissions"
+                    /*
+                    adexport -> kv "fetches supported export formats"
+                    */
+
+                    adpay -> rbac "verifies non-member status"
+                    adpay -> adview "displays payment message if full access is blocked"
+                    /*
+                    adsearch -> auditTrail "logs search queries"
+                    adview -> auditTrail "logs view events"
+                    adexport -> auditTrail "logs export activity"
+                    */
                 }
 
                 
@@ -335,6 +393,8 @@ container <name> [description] [technology] [tags] {
                     ginstore -> notify "sends user notifications"
                     lnver -> notify "sends verification reminders to users"
                     accessData -> notify "sends notifications for new subscriptions, approvals, or record updates"
+                    adsub -> notify "sends request to data owner"
+                    adgroup -> notify "notifies group owner if request submitted"
                 }
 
                 reports = container "Reporting Service" "Scheduled reports, audit, usage logs"
@@ -357,8 +417,6 @@ container <name> [description] [technology] [tags] {
                     notification -> messaging "emmits events"
                     messaging -> notification "listents to subscriptions"
                 }
-
-                prefixMgmt -> secrets "retrieves validation rules or schema secrets from Key Vault"
             }
 
             xsystem -> enterprise_identity "Federated login and authentication"
@@ -366,7 +424,7 @@ container <name> [description] [technology] [tags] {
             xsystem -> quickbooks "Integration via API"
             xsystem -> help_portal "Link to help and training content"
 
-            webapp -> api "Communicates via REST"
+            webapp -> apiGateway "Communicates via REST"
             
             integration -> sap
             integration -> quickbooks
@@ -387,12 +445,12 @@ container <name> [description] [technology] [tags] {
 
         component userMgmt "UserMgmtComponents" {
             include *
-            autolayout
+            exclude accessData ginMgmt locationMgmt
         }
 
         component prefixMgmt "PrefixMgmtComponents" {
             include *
-            autolayout
+            exclude locationMgmt userMgmt
         }
 
         component webapp "WebAppComponents" {
@@ -455,6 +513,11 @@ container <name> [description] [technology] [tags] {
             }
             element "Failover" {
                 opacity 25
+            }
+            element "KeyVault" {
+                background #1168bd
+                color #ffffff
+                shape Folder
             }
         }
     }
