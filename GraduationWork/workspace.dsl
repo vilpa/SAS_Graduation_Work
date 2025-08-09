@@ -21,6 +21,7 @@ container <name> [description] [technology] [tags] {
         
         key_vault = softwareSystem "Azure Key Vault" "Secure secret and credential storage" "KeyVault"
         azure_monitor = softwareSystem "Azure Monitor" "Observability and metrics platform"
+        event_hub = softwareSystem "Azure Event Hubs" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub"
         
         graph_db = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures"
 
@@ -160,6 +161,28 @@ container <name> [description] [technology] [tags] {
 
                 analytics -> monitor "sends logs and metrics to Azure Monitor or App Insights"
             }
+
+            indexing = container "Search Indexing Pipeline" {
+                technology "Azure Functions / .NET 8"
+                description "Consumes CDC events, denormalizes to search docs, and bulk-indexes to Elasticsearch"
+                tags "Integration, ETL, Search"
+
+                sub = component "Event Consumer" "Consumes gin.* and location.* from Event Hubs"
+                xform = component "Denormalizer" "Flattens graph hierarchies & selected attributes into search-friendly documents"
+                dedup = component "Idempotency Store" "Tracks processed event IDs/versions to ensure exactly-once semantics" "Redis" "Cache"
+                bulk = component "Elasticsearch Bulk Indexer" "Batches writes/updates/deletes to Elasticsearch with backoff and DLQ"
+
+                ises = component "Elasticsearch Cluster" "Read-optimized indices: prefixes, gins, lns (+ alias per version)" "Elasticsearch" "Database"
+                dlq = component "Dead Letter Queue" "Unprocessable events for replay/inspection" "Azure Storage Queue" "Queue"
+
+                // Links
+                indexing -> event_hub "subscribes to events"
+                sub -> xform "passes event payloads"
+                xform -> dedup "checks/records event version"
+                xform -> bulk "sends upserts/deletes"
+                bulk -> ises "bulk API"
+                sub -> dlq "sends failed events"
+            }
             
             group "Core Services" {
                 userMgmt = container "User Management Service" {
@@ -238,9 +261,9 @@ container <name> [description] [technology] [tags] {
                     ginshare = component "Publish & Transfer Module" "Controls data publishing, ownership transfer, and sharing for GIN records" ".NET 8"
                     ginimport = component "GIN Import Adapter" "Supports record import via Excel, CSV, XML with validation and deduplication" ".NET 8"
                     barcodegen = component "Barcode Generator" "Generates and exports standard-compliant barcodes (e.g., Code128, QR, DataMatrix) for GINs in image formats like PNG, SVG, PDF" ".NET 8"
-
-                    ggdb = component "Graph Database" "Stores product records, GINs, attributes, images, and hierarchy metadata" "SQLServer" "Database"
-
+ 
+                    ggdb = component "Graph Database" "Stores product records, GINs, attributes, images, and hierarchy metadata" "Cosmos DB" "Database"
+                    
                     // External Interactions
                     ginMgmt -> capctr "updates prefix capacity after GIN assignment"
                     ginMgmt -> rbac "authorizes user access to product data"
@@ -440,7 +463,6 @@ container <name> [description] [technology] [tags] {
 
         container xsystem "ContainerDiagram" {
             include *
-            autolayout
         }
 
         component userMgmt "UserMgmtComponents" {
@@ -459,17 +481,45 @@ container <name> [description] [technology] [tags] {
 
         component ginMgmt "GinMgmtComponents" {
             include *
-            autolayout
+            exclude notify
         }
 
         component locationMgmt "LocationMgmtComponents" {
             include *
-            autolayout
+            exclude userMgmt
         }
 
         component accessData "AccessDataComponents" {
             include *
-            autolayout
+            exclude "locationMgmt -> userMgmt"
+            exclude "locationMgmt -> ginMgmt"
+            exclude "locationMgmt -> prefixMgmt"
+            exclude "locationMgmt -> accessData"
+            exclude "locationMgmt -> notify"
+
+            exclude "ginMgmt -> userMgmt"
+            exclude "ginMgmt -> prefixMgmt"
+            exclude "ginMgmt -> accessData"
+            exclude "ginMgmt -> notify"
+            exclude "ginMgmt -> locationMgmt"
+
+            exclude "userMgmt -> ginMgmt"
+            exclude "userMgmt -> prefixMgmt"
+            exclude "userMgmt -> accessData"
+            exclude "userMgmt -> notify"
+            exclude "userMgmt -> locationMgmt"
+
+            exclude "prefixMgmt -> ginMgmt"
+            exclude "prefixMgmt -> userMgmt"
+            exclude "prefixMgmt -> accessData"
+            exclude "prefixMgmt -> notify"
+            exclude "prefixMgmt -> locationMgmt"
+
+            exclude "userMgmt -> locationMgmt"
+        }
+
+        component indexing "IndexingES" {
+            include *
         }
         
         
@@ -518,6 +568,9 @@ container <name> [description] [technology] [tags] {
                 background #1168bd
                 color #ffffff
                 shape Folder
+            }
+            element "Queue" {
+                shape Pipe
             }
         }
     }
