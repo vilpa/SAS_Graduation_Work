@@ -29,78 +29,78 @@ container <name> [description] [technology] [tags] {
             description "Modular platform to manage GIN, LN and shared data"
             
             webapp = container "Web Application" {
-                technology "React"
+                technology "REST, React"
                 description "Delivers UI via Azure Front Door and CDN"
                 tags "React, SPA, Web Browser"
 
                 webauth = component "Authentication/Authorization" {
-                    technology "React"
+                    technology "REST, React"
                     description "Handles SSO, role-based access, and permissions using claims-based auth integrated with external Identity Management (OAuth/SAML)"
                     tags "React, SPA, Web Browser, Auth"
                 }
 
                 webpref = component "Prefixes Branch" {
-                    technology "React"
+                    technology "REST, React"
                     description "Displays and manages Prefix data, including capacity counters and linking to product/location creation"
                     tags "React, SPA, Web Browser"
                 }
 
                 webprod = component "Product Branch" {
-                    technology "React"
+                    technology "REST, React"
                     description "Allows users to create, manage, and publish product records with GINs, barcodes, and hierarchies"
                     tags "React, SPA, Web Browser"
                 }
 
                 webloc = component "Location Branch" {
-                    technology "React"
+                    technology "REST, React"
                     description "Allows users to create, manage, and publish location records with LNs and hierarchical relationships"
                     tags "React, SPA, Web Browser"
                 }
 
                 websearch = component "Search/Reporting Branch" {
-                    technology "React"
+                    technology "REST, React"
                     description "Enables search, filtering, and reporting for Prefix, GIN, and LN data with export capabilities"
                     tags "React, SPA, Web Browser, Reporting"
                 }
 
                 webhelp = component "Help/Tutorials Branch" {
-                    technology "React"
+                    technology "REST, React"
                     description "Provides contextual help and access to training materials such as videos and webinars"
                     tags "React, SPA, Web Browser"
                 }
 
                 webdash = component "Dashboard/Notifications" {
-                    technology "React"
+                    technology "REST, React"
                     description "User home screen with alerts, pending tasks, usage counters, and user-specific updates"
                     tags "React, SPA, Web Browser, Dashboard"
                 }
 
                 webworkflow = component "Workflow Management" {
-                    technology "React"
+                    technology "REST, React"
                     description "Handles record-level workflows for approval, status tracking, and locking mechanisms"
                     tags "React, SPA, Web Browser, Workflow"
                 }
 
                 webpublish = component "Publishing & Subscriptions" {
-                    technology "React"
+                    technology "REST, React"
                     description "Allows users to publish and subscribe to record data visibility with granular permission settings"
                     tags "React, SPA, Web Browser, Sharing"
                 }
 
                 webimport = component "Import/Export" {
-                    technology "React"
+                    technology "REST, React"
                     description "Enables bulk data import/export for products and locations using multiple formats with validation"
                     tags "React, SPA, Web Browser, Data"
                 }
 
                 webfeedback = component "Feedback Module" {
-                    technology "React"
+                    technology "REST, React"
                     description "Captures user feedback routed to administrators or tracking systems"
                     tags "React, SPA, Web Browser, Feedback"
                 }
 
                 webaudit = component "Audit Trail Viewer" {
-                    technology "React"
+                    technology "REST, React"
                     description "Displays user activity history, record changes, and transfer logs for transparency and compliance"
                     tags "React, SPA, Web Browser, Audit"
                 }
@@ -152,8 +152,7 @@ container <name> [description] [technology] [tags] {
                 configmgr -> apimAdmin "used by devops team to execute migration scripts from 3Scale to Azure"
             }
 
-
-            messaging = container "Messaging Bus" "Azure Service Bus/Event Grid" "Asynchronous messaging"
+            messaging = container "Messaging Bus" "Azure Service Bus/Event Grid" "Asynchronous messaging" "Queue"
             
             monitor = container "Monitoring Stack" {
                 description "Azure Monitor, App Insights, Log Analytics"
@@ -403,12 +402,43 @@ container <name> [description] [technology] [tags] {
                     adexport -> auditTrail "logs export activity"
                     */
                 }
-
-                
+              
                 notify = container "Notification Service" {
                     technology ".NET 8"
                     description "Handles all notifications and preferences"
                     tags "Core, Utility, Shared"
+
+                    notifEventConsumer = component "EventHub Consumer" "Consumes domain/system events and converts them into notification intents" ".NET 8" "Notification, Ingest"
+                    notifOrchestrator = component "Notification Orchestrator" "Routes intents to channels, applies routing rules, and coordinates multi-channel fan-out" ".NET 8" "Notification, Core"
+                    notifPreferenceManager = component "Preference & Opt-In Manager" "Stores per-user/company preferences, opt-ins, quiet hours, and frequency settings" ".NET 8" "Notification, Privacy"
+                    notifRetryDLQ = component "Retry & DLQ Processor" "Retries transient failures and moves poison messages to dead letter queue" ".NET 8" "Notification, Reliability"
+                    notifDeliveryTracker = component "Delivery Status & Bounce Tracker" "Tracks sends, opens, clicks, bounces, and complaints; updates user/channel health" ".NET 8" "Notification, Metrics"
+                    notifInAppHub = component "In-App Notification Hub" "Delivers real-time UI notifications via WebSocket/WebPush and stores unread state" ".NET 8" "Notification, Channel"
+                    notifEmailAdapter = component "Email Adapter" "Sends emails via SMTP/SendGrid with templating and attachments support" ".NET 8" "Notification, Channel, Email"
+                    notifSmsAdapter = component "SMS Adapter" "Sends text messages via Twilio/Azure Communication Services" ".NET 8" "Notification, Channel, SMS"
+                    notifPushAdapter = component "Mobile/Web Push Adapter" "Sends push notifications via FCM/APNS/WebPush" ".NET 8" "Notification, Channel, Push"
+                    notifWebhookAdapter = component "Webhook/ChatOps Adapter" "Delivers messages to Slack/Teams/webhooks for operational alerts" ".NET 8" "Notification, Channel, Webhook"
+                    notifScheduler = component "Digest & Scheduling Service" "Schedules digests, reminders, and time-windowed deliveries" ".NET 8" "Notification, Scheduling"
+                    notifKeyVaultReader = component "Key Vault Reader" "Securely retrieves channel credentials, API keys, and secrets" ".NET 8" "Security, Infrastructure"
+
+/*
+  notifEmailAdapter -> softwareSystem "Azure Communication Services - Email" "Email delivery" "ACS"
+  notifSmsAdapter   -> softwareSystem "Azure Communication Services - SMS" "SMS delivery" "ACS"
+  notifPushAdapter  -> softwareSystem "Azure Notification Hubs" "Mobile push (APNS/FCM)" "NotificationHubs"
+  notifInAppHub     -> softwareSystem "Azure Web PubSub" "Real-time in-app notifications" "WebPubSub"
+  notifWebhookAdapter -> softwareSystem "Logic Apps" "Outbound webhooks/Teams/Slack" "LogicApps"
+
+  // Ingest, orchestration, and reliability
+  notifEventConsumer -> softwareSystem "Azure Event Hubs" "Event ingress (domain/system)" "EventHub"
+  notifOrchestrator  -> softwareSystem "Azure Functions" "Stateless processing" "Functions"
+  notifScheduler     -> softwareSystem "Logic Apps / Durable Functions" "Scheduling & digests" "LogicApps"
+  notifRetryDLQ      -> softwareSystem "Azure Service Bus" "Retry & DLQ queues" "ServiceBus"
+
+  // Config, security, observability, data
+  notifKeyVaultReader -> softwareSystem "Azure Key Vault" "Secrets & credentials" "KeyVault"
+  notifDeliveryTracker -> softwareSystem "Application Insights" "Telemetry & metrics" "AppInsights"
+  notifPreferenceManager -> softwareSystem "Azure Cosmos DB" "Prefs, topics, templates" "CosmosDB"
+*/
 
                     pswm -> notify "Azure Service Bus Event. Notify user via email/SMS about password changes"
                     pfpubsub -> notify "Azure Service Bus Event. Notify user via email/SMS about prefix changes"
@@ -420,9 +450,19 @@ container <name> [description] [technology] [tags] {
                     adgroup -> notify "notifies group owner if request submitted"
                 }
 
-                reports = container "Reporting Service" "Scheduled reports, audit, usage logs"
-                feedback = container "Help & Feedback Service" "Routes user feedback, shows help links"
-                integration = container "Integration Gateway" "Gateway to third-party systems (SAP, QuickBooks)"
+                feedback = container "Help & Feedback Service" {
+                    description "Routes user feedback, shows help links"
+                    technology ".NET 8"
+                    tags "Core, Reporting"
+                }
+
+                integration = container "Integration Gateway" { 
+                    description "Gateway to third-party systems (SAP, QuickBooks)" 
+                    technology ".NET 8"
+                    tags "Core, Reporting"
+
+                    integration -> accessData "import and export shared Prefix, GIN, and LN data for external systems"
+                }
 
                 sidecar = container "Sidecar" {
                     technology ".NET 8"
@@ -440,6 +480,15 @@ container <name> [description] [technology] [tags] {
                     notification -> messaging "emmits events"
                     messaging -> notification "listents to subscriptions"
                 }
+            }
+
+            reports = container "Reporting Service" {
+                    description "Scheduled reports, audit, usage logs"
+                    technology "Databricks, Power BI"
+                    tags "Reporting"
+
+                    reports -> apiGateway "get user traffic and API usage analytics"
+                    reports -> accessData "export statistics and analytics of GIN and Location usage by users and companies"
             }
 
             xsystem -> enterprise_identity "Federated login and authentication"
@@ -519,6 +568,10 @@ container <name> [description] [technology] [tags] {
         }
 
         component indexing "IndexingES" {
+            include *
+        }
+
+        component notify "NotificationService" {
             include *
         }
         
