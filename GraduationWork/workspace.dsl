@@ -17,13 +17,27 @@ container <name> [description] [technology] [tags] {
         
         sap = softwareSystem "SAP" "External ERP system"
         quickbooks = softwareSystem "QuickBooks" "External financial system"
-        help_portal = softwareSystem "Help Resources" "External training and help content platform"
-        
-        key_vault = softwareSystem "Azure Key Vault" "Secure secret and credential storage" "KeyVault"
-        azure_monitor = softwareSystem "Azure Monitor" "Observability and metrics platform"
-        event_hub = softwareSystem "Azure Event Hubs" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub"
-        
-        graph_db = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures"
+
+        group "Azure Services" {
+            communicationServices   = softwareSystem "Azure Communication Services" "ACS"
+            logicApps               = softwareSystem "Logic Apps" "Outbound webhooks/Teams/Slack" "LogicApps"
+            functions               = softwareSystem "Azure Functions" "Stateless processing" "Functions"
+            serviceBus              = softwareSystem "Azure Service Bus" "Retry & DLQ queues" "ServiceBus, Queue"
+            applicationInsights     = softwareSystem "Application Insights" "Telemetry & metrics" "AppInsights"
+            cosmosDB                = softwareSystem "Azure Cosmos DB" "Prefs, topics, templates" "CosmosDB, Database"
+            cosmosDBfeedbacks       = softwareSystem "Azure Cosmos DB (feedbacks)" "Feedbacks" "CosmosDB, Database"
+            key_vault = softwareSystem "Azure Key Vault" "Secure secret and credential storage" "KeyVault"
+            azure_monitor = softwareSystem "Azure Monitor" "Observability and metrics platform"
+            eventHubs = softwareSystem "Azure Event Hubs" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub"            
+            eventHubs2 = softwareSystem "Azure Event Hubs (CDC)" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub"            
+
+            graph_db = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures"
+            helpBlobStorage = softwareSystem "Azure Blob Storage" "Stores help videos, documents, and media assets for tutorials and training" "BlobStorage"
+            
+            functions -> cosmosDB "reads changes from Cosmos"
+            functions -> eventHubs "emits events"
+            functions -> serviceBus "emits events"
+        }
 
         xsystem = softwareSystem "X-Customer Member Application" {
             description "Modular platform to manage GIN, LN and shared data"
@@ -126,63 +140,6 @@ container <name> [description] [technology] [tags] {
                 public -> webauth "Login"
             }
             
-            apiGateway = container "API Gateway" {
-                technology "Azure API Management"
-                description "Central entry point for all RESTful APIs; enforces policies, routing, throttling, monitoring, and legacy 3Scale migration"
-                tags "Infrastructure, Gateway, Azure"
-
-                configmgr = component "3Scale Config Migrator" "Migrates existing API definitions, plans, rate limits, and policies from 3Scale to Azure API Management"
-                routing = component "API Router" "Routes requests to internal services (GIN, Location, Prefix, Access Data, User Mgmt) based on path, method, and version"
-                policy = component "Policy Enforcement Engine" "Applies throttling, quota, CORS, caching, IP filtering, and JWT validation policies"
-                analytics = component "Telemetry & Analytics Module" "Captures request metrics, logs, errors, and usage analytics for monitoring and reporting"
-                docportal = component "Developer Portal" "Provides auto-generated API documentation, testing sandbox, and subscription access to consumers"
-
-                // External Consumers
-                // apiGateway -> publicConsumer "allows public and registered users to access shared data"
-                // apiGateway -> partnerSystem "supports integration with external trading/retail partners via secure APIs"
-                
-                // Internal Services
-                // routing -> ginMgmt "routes product-related API calls"
-                // routing -> locationMgmt "routes location-related API calls"
-                // routing -> prefixMgmt "routes prefix-related API calls"
-                // routing -> accessData "routes search and subscription calls"
-                // routing -> userMgmt "routes authentication and profile management APIs"
-
-                // Other Interactions
-                configmgr -> apimAdmin "used by devops team to execute migration scripts from 3Scale to Azure"
-            }
-
-            messaging = container "Messaging Bus" "Azure Service Bus/Event Grid" "Asynchronous messaging" "Queue"
-            
-            monitor = container "Monitoring Stack" {
-                description "Azure Monitor, App Insights, Log Analytics"
-                technology "Azure Monitor, App Insights, Log Analytics"
-
-                analytics -> monitor "sends logs and metrics to Azure Monitor or App Insights"
-            }
-
-            indexing = container "Search Indexing Pipeline" {
-                technology "Azure Functions / .NET 8"
-                description "Consumes CDC events, denormalizes to search docs, and bulk-indexes to Elasticsearch"
-                tags "Integration, ETL, Search"
-
-                sub = component "Event Consumer" "Consumes gin.* and location.* from Event Hubs"
-                xform = component "Denormalizer" "Flattens graph hierarchies & selected attributes into search-friendly documents"
-                dedup = component "Idempotency Store" "Tracks processed event IDs/versions to ensure exactly-once semantics" "Redis" "Cache"
-                bulk = component "Elasticsearch Bulk Indexer" "Batches writes/updates/deletes to Elasticsearch with backoff and DLQ"
-
-                ises = component "Elasticsearch Cluster" "Read-optimized indices: prefixes, gins, lns (+ alias per version)" "Elasticsearch" "Database"
-                dlq = component "Dead Letter Queue" "Unprocessable events for replay/inspection" "Azure Storage Queue" "Queue"
-
-                // Links
-                indexing -> event_hub "subscribes to events"
-                sub -> xform "passes event payloads"
-                xform -> dedup "checks/records event version"
-                xform -> bulk "sends upserts/deletes"
-                bulk -> ises "bulk API"
-                sub -> dlq "sends failed events"
-            }
-            
             group "Core Services" {
                 userMgmt = container "User Management Service" {
                     technology ".NET 8"
@@ -209,9 +166,8 @@ container <name> [description] [technology] [tags] {
                     ssoa -> enterprise_identity "OAuth2/SAML. Authenticate user identity"
                     flogin -> external_identity "OpenID Connect/SAML. Support federated login flows"
                     uprfm -> udbs "SQL via ORM. Store/retrieve user profile info"
-                    policy -> rbac "validates user tokens and claims (OAuth2, SAML)"
                 }
-    
+
                 prefixMgmt = container "Prefix Management Service" {
                     technology ".NET 8"
                     description "Handles prefix licensing, capacity tracking, and lookup for GIN and LN creation"
@@ -260,7 +216,7 @@ container <name> [description] [technology] [tags] {
                     ginshare = component "Publish & Transfer Module" "Controls data publishing, ownership transfer, and sharing for GIN records" ".NET 8"
                     ginimport = component "GIN Import Adapter" "Supports record import via Excel, CSV, XML with validation and deduplication" ".NET 8"
                     barcodegen = component "Barcode Generator" "Generates and exports standard-compliant barcodes (e.g., Code128, QR, DataMatrix) for GINs in image formats like PNG, SVG, PDF" ".NET 8"
- 
+
                     ggdb = component "Graph Database" "Stores product records, GINs, attributes, images, and hierarchy metadata" "Cosmos DB" "Database"
                     
                     // External Interactions
@@ -402,68 +358,7 @@ container <name> [description] [technology] [tags] {
                     adexport -> auditTrail "logs export activity"
                     */
                 }
-              
-                notify = container "Notification Service" {
-                    technology ".NET 8"
-                    description "Handles all notifications and preferences"
-                    tags "Core, Utility, Shared"
-
-                    notifEventConsumer = component "EventHub Consumer" "Consumes domain/system events and converts them into notification intents" ".NET 8" "Notification, Ingest"
-                    notifOrchestrator = component "Notification Orchestrator" "Routes intents to channels, applies routing rules, and coordinates multi-channel fan-out" ".NET 8" "Notification, Core"
-                    notifPreferenceManager = component "Preference & Opt-In Manager" "Stores per-user/company preferences, opt-ins, quiet hours, and frequency settings" ".NET 8" "Notification, Privacy"
-                    notifRetryDLQ = component "Retry & DLQ Processor" "Retries transient failures and moves poison messages to dead letter queue" ".NET 8" "Notification, Reliability"
-                    notifDeliveryTracker = component "Delivery Status & Bounce Tracker" "Tracks sends, opens, clicks, bounces, and complaints; updates user/channel health" ".NET 8" "Notification, Metrics"
-                    notifInAppHub = component "In-App Notification Hub" "Delivers real-time UI notifications via WebSocket/WebPush and stores unread state" ".NET 8" "Notification, Channel"
-                    notifEmailAdapter = component "Email Adapter" "Sends emails via SMTP/SendGrid with templating and attachments support" ".NET 8" "Notification, Channel, Email"
-                    notifSmsAdapter = component "SMS Adapter" "Sends text messages via Twilio/Azure Communication Services" ".NET 8" "Notification, Channel, SMS"
-                    notifPushAdapter = component "Mobile/Web Push Adapter" "Sends push notifications via FCM/APNS/WebPush" ".NET 8" "Notification, Channel, Push"
-                    notifWebhookAdapter = component "Webhook/ChatOps Adapter" "Delivers messages to Slack/Teams/webhooks for operational alerts" ".NET 8" "Notification, Channel, Webhook"
-                    notifScheduler = component "Digest & Scheduling Service" "Schedules digests, reminders, and time-windowed deliveries" ".NET 8" "Notification, Scheduling"
-                    notifKeyVaultReader = component "Key Vault Reader" "Securely retrieves channel credentials, API keys, and secrets" ".NET 8" "Security, Infrastructure"
-
-/*
-  notifEmailAdapter -> softwareSystem "Azure Communication Services - Email" "Email delivery" "ACS"
-  notifSmsAdapter   -> softwareSystem "Azure Communication Services - SMS" "SMS delivery" "ACS"
-  notifPushAdapter  -> softwareSystem "Azure Notification Hubs" "Mobile push (APNS/FCM)" "NotificationHubs"
-  notifInAppHub     -> softwareSystem "Azure Web PubSub" "Real-time in-app notifications" "WebPubSub"
-  notifWebhookAdapter -> softwareSystem "Logic Apps" "Outbound webhooks/Teams/Slack" "LogicApps"
-
-  // Ingest, orchestration, and reliability
-  notifEventConsumer -> softwareSystem "Azure Event Hubs" "Event ingress (domain/system)" "EventHub"
-  notifOrchestrator  -> softwareSystem "Azure Functions" "Stateless processing" "Functions"
-  notifScheduler     -> softwareSystem "Logic Apps / Durable Functions" "Scheduling & digests" "LogicApps"
-  notifRetryDLQ      -> softwareSystem "Azure Service Bus" "Retry & DLQ queues" "ServiceBus"
-
-  // Config, security, observability, data
-  notifKeyVaultReader -> softwareSystem "Azure Key Vault" "Secrets & credentials" "KeyVault"
-  notifDeliveryTracker -> softwareSystem "Application Insights" "Telemetry & metrics" "AppInsights"
-  notifPreferenceManager -> softwareSystem "Azure Cosmos DB" "Prefs, topics, templates" "CosmosDB"
-*/
-
-                    pswm -> notify "Azure Service Bus Event. Notify user via email/SMS about password changes"
-                    pfpubsub -> notify "Azure Service Bus Event. Notify user via email/SMS about prefix changes"
-                    ginMgmt -> notify "sends notifications for status updates, duplicates, errors"
-                    ginstore -> notify "sends user notifications"
-                    lnver -> notify "sends verification reminders to users"
-                    accessData -> notify "sends notifications for new subscriptions, approvals, or record updates"
-                    adsub -> notify "sends request to data owner"
-                    adgroup -> notify "notifies group owner if request submitted"
-                }
-
-                feedback = container "Help & Feedback Service" {
-                    description "Routes user feedback, shows help links"
-                    technology ".NET 8"
-                    tags "Core, Reporting"
-                }
-
-                integration = container "Integration Gateway" { 
-                    description "Gateway to third-party systems (SAP, QuickBooks)" 
-                    technology ".NET 8"
-                    tags "Core, Reporting"
-
-                    integration -> accessData "import and export shared Prefix, GIN, and LN data for external systems"
-                }
-
+                
                 sidecar = container "Sidecar" {
                     technology ".NET 8"
                     description "Shared utility functions such as Key Vault access, centralized logging, event-based notifications"
@@ -477,9 +372,175 @@ container <name> [description] [technology] [tags] {
                     secrets -> key_vault
                     logger -> azure_monitor
                     metrix -> azure_monitor
-                    notification -> messaging "emmits events"
-                    messaging -> notification "listents to subscriptions"
+                    notification -> serviceBus "emmits events"
+                    serviceBus -> notification "listents to subscriptions"
+                    metrix -> applicationInsights "Telemetry & metrics"
                 }
+            }
+
+            apiGateway = container "API Gateway" {
+                technology "Azure API Management"
+                description "Central entry point for all RESTful APIs; enforces policies, routing, throttling, monitoring, and legacy 3Scale migration"
+                tags "Infrastructure, Gateway, Azure"
+
+                configmgr = component "3Scale Config Migrator" "Migrates existing API definitions, plans, rate limits, and policies from 3Scale to Azure API Management"
+                routing = component "API Router" "Routes requests to internal services (GIN, Location, Prefix, Access Data, User Mgmt) based on path, method, and version"
+                policy = component "Policy Enforcement Engine" "Applies throttling, quota, CORS, caching, IP filtering, and JWT validation policies"
+                analytics = component "Telemetry & Analytics Module" "Captures request metrics, logs, errors, and usage analytics for monitoring and reporting"
+                docportal = component "Developer Portal" "Provides auto-generated API documentation, testing sandbox, and subscription access to consumers"
+
+                // External Consumers
+                // apiGateway -> publicConsumer "allows public and registered users to access shared data"
+                // apiGateway -> partnerSystem "supports integration with external trading/retail partners via secure APIs"
+                
+                // Internal Services
+                // routing -> ginMgmt "routes product-related API calls"
+                // routing -> locationMgmt "routes location-related API calls"
+                // routing -> prefixMgmt "routes prefix-related API calls"
+                // routing -> accessData "routes search and subscription calls"
+                // routing -> userMgmt "routes authentication and profile management APIs"
+
+                // Other Interactions
+                configmgr -> apimAdmin "used by devops team to execute migration scripts from 3Scale to Azure"
+                policy -> rbac "validates user tokens and claims (OAuth2, SAML)"
+            }
+
+            indexing = container "Search Indexing Pipeline" {
+                technology "Azure Functions / .NET 8"
+                description "Consumes CDC events, denormalizes to search docs, and bulk-indexes to Elasticsearch"
+                tags "Integration, ETL, Search"
+
+                sub = component "Event Consumer" "Consumes gin.* and location.* from Event Hubs"
+                xform = component "Denormalizer" "Flattens graph hierarchies & selected attributes into search-friendly documents"
+                dedup = component "Idempotency Store" "Tracks processed event IDs/versions to ensure exactly-once semantics" "Redis" "Cache"
+                bulk = component "Elasticsearch Bulk Indexer" "Batches writes/updates/deletes to Elasticsearch with backoff and DLQ"
+
+                ises = component "Elasticsearch Cluster" "Read-optimized indices: prefixes, gins, lns (+ alias per version)" "Elasticsearch" "Database"
+                dlq = component "Dead Letter Queue" "Unprocessable events for replay/inspection" "Azure Storage Queue" "Queue"
+
+                // Links
+                indexing -> eventHubs "subscribes to events"
+                sub -> xform "passes event payloads"
+                xform -> dedup "checks/records event version"
+                xform -> bulk "sends upserts/deletes"
+                bulk -> ises "bulk API"
+                sub -> dlq "sends failed events"
+            }
+            
+            notify = container "Notification Service" {
+                technology ".NET 8"
+                description "Handles all notifications and preferences"
+                tags "Core, Utility, Shared"
+
+                notifEventConsumer = component "EventHub Consumer" "Consumes domain/system events and converts them into notification intents" ".NET 8" "Notification, Ingest"
+                notifOrchestrator = component "Notification Orchestrator" "Routes intents to channels, applies routing rules, and coordinates multi-channel fan-out" ".NET 8" "Notification, Core"
+                notifPreferenceManager = component "Preference & Opt-In Manager" "Stores per-user/company preferences, opt-ins, quiet hours, and frequency settings" ".NET 8" "Notification, Privacy"
+                notifRetryDLQ = component "Retry & DLQ Processor" "Retries transient failures and moves poison messages to dead letter queue" ".NET 8" "Notification, Reliability"
+                notifDeliveryTracker = component "Delivery Status & Bounce Tracker" "Tracks sends, opens, clicks, bounces, and complaints; updates user/channel health" ".NET 8" "Notification, Metrics"
+                notifEmailAdapter = component "Email Adapter" "Sends emails via SMTP/SendGrid with templating and attachments support" ".NET 8" "Notification, Channel, Email"
+                notifSmsAdapter = component "SMS Adapter" "Sends text messages via Twilio/Azure Communication Services" ".NET 8" "Notification, Channel, SMS"
+                notifWebhookAdapter = component "Webhook/ChatOps Adapter" "Delivers messages to Slack/Teams/webhooks for operational alerts" ".NET 8" "Notification, Channel, Webhook"
+                notifScheduler = component "Digest & Scheduling Service" "Schedules digests, reminders, and time-windowed deliveries" ".NET 8" "Notification, Scheduling"
+
+                notifEventConsumer -> notifOrchestrator "routes through the appropriate delivery workflows"
+                notifEventConsumer -> notifRetryDLQ "sends failed events for later processing"
+
+                notifEmailAdapter -> communicationServices "Email delivery"
+                notifSmsAdapter   -> communicationServices "SMS delivery"
+                notifWebhookAdapter -> logicApps "Outbound webhooks/Teams/Slack"
+
+                // Ingest, orchestration, and reliability
+                eventHubs -> notifEventConsumer "Event ingress (domain/system)"
+                notifOrchestrator  -> functions "Stateless processing"
+                notifScheduler     -> logicApps "Scheduling & digests"                 
+                
+                // Config, security, observability, data
+                notifPreferenceManager -> cosmosDB "Prefs, topics, templates"
+
+                pswm -> notify "Azure Service Bus Event. Notify user via email/SMS about password changes"
+                pfpubsub -> notify "Azure Service Bus Event. Notify user via email/SMS about prefix changes"
+                ginMgmt -> notify "sends notifications for status updates, duplicates, errors"
+                ginstore -> notify "sends user notifications"
+                lnver -> notify "sends verification reminders to users"
+                accessData -> notify "sends notifications for new subscriptions, approvals, or record updates"
+                adsub -> notify "sends request to data owner"
+                adgroup -> notify "notifies group owner if request submitted"
+            }
+
+            feedback = container "Help & Feedback Service" {
+                description "Routes user feedback, shows help links"
+                technology ".NET 8"
+                tags "Core, Reporting"
+
+                helpContentManager = component "Help Content Manager" "CRUD operations for help articles, FAQs, and tutorial metadata" ".NET 8" "Help, Content"
+                helpSearchEngine = component "Help Search Engine" "Indexes help content and enables keyword/topic-based search" ".NET 8" "Help, Search"
+                helpContextResolver = component "Contextual Help Resolver" "Determines and displays relevant help content based on the user's current module or action" ".NET 8" "Help, Context"
+                helpLocalizationEngine = component "Help Localization Engine" "Provides localized help content in multiple languages" ".NET 8" "Help, Localization"
+                feedbackCollector = component "Feedback Collector" "Captures user feedback from the UI, including comments, ratings, and issue reports" ".NET 8" "Feedback, Capture"
+                feedbackRouter = component "Feedback Router" "Routes feedback to administrators or appropriate service teams" ".NET 8" "Feedback, Routing"
+                feedbackAnalytics = component "Feedback Analytics" "Aggregates and analyzes feedback for trends, satisfaction scores, and improvement areas" ".NET 8" "Feedback, Analytics"
+                feedbackNotification = component "Feedback Notification" "Sends alerts to admins when new feedback or critical issues are submitted" ".NET 8" "Feedback, Notification"
+                helpApi = component "Help & Feedback API" "Provides REST endpoints for retrieving help content and submitting feedback" ".NET 8" "Help, API"
+            
+                helpApi -> helpContentManager "retrieves and manages help articles and tutorials"
+                helpApi -> helpSearchEngine "performs keyword and topic-based help searches"
+                helpApi -> helpContextResolver "fetches context-specific help content"
+                helpApi -> helpLocalizationEngine "serves localized help content to users"
+                helpApi -> feedbackCollector "submits user feedback through UI/API"
+
+                helpContentManager -> helpLocalizationEngine "provides localized versions of help content"
+                helpContentManager -> helpBlobStorage "stores and retrieves help videos, documents, and other media assets"
+
+                helpSearchEngine -> helpContentManager "indexes new or updated help content"
+                helpSearchEngine -> helpLocalizationEngine "indexes localized help content"
+
+                helpContextResolver -> helpContentManager "retrieves relevant help content"
+                helpContextResolver -> helpSearchEngine "queries for matching articles based on context"
+
+                feedbackCollector -> feedbackRouter "routes feedback to appropriate admins or teams"
+                feedbackCollector -> feedbackAnalytics "provides raw feedback data for aggregation"
+                feedbackCollector -> cosmosDBfeedbacks "upserts feedback documents"
+
+                feedbackRouter -> feedbackNotification "triggers alerts for new or critical feedback"
+
+                feedbackAnalytics -> feedbackNotification "sends reports or alerts based on aggregated feedback"
+            }
+
+            integration = container "Integration Gateway" { 
+                description "Gateway to third-party systems (SAP, QuickBooks)" 
+                technology ".NET 8"
+                tags "Core, Reporting"
+
+                igApi = component "Integration Gateway API" "Centralized API interface for importing/exporting records with external systems" "Integration, API"
+                igSapAdapter = component "SAP Adapter" "Handles data exchange with SAP for product, location, and prefix records; supports IDoc/XML/JSON formats" "Integration, SAP"
+                igQuickBooksAdapter = component "QuickBooks Adapter" "Manages data synchronization with QuickBooks Online/Desktop for product and location records" "Integration, QuickBooks"
+                igMappingEngine = component "Data Mapping & Transformation Engine" "Transforms internal GIN/LN/Prefix schema to and from external system formats" "Integration, Transformation"
+                igValidationEngine = component "Validation & Compliance Engine" "Validates incoming external data against X-Customer standards and business rules" "Integration, Validation"
+                igScheduler = component "Integration Scheduler" "Schedules batch imports/exports and coordinates asynchronous data sync jobs" "Integration, Scheduling"
+                igEventPublisher = component "Change Event Publisher" "Publishes internal change events to external systems via webhooks, APIs, or message queues" "Integration, Eventing"
+                igErrorHandler = component "Error Handling & Retry Manager" "Captures integration errors, retries transient failures, and logs issues for review" "Integration, Reliability"
+
+                integration -> accessData "import and export shared Prefix, GIN, and LN data for external systems"
+
+                // Internal links
+                igApi -> igMappingEngine "transform internal schema to external formats and vice versa"
+                igApi -> igValidationEngine "enforce X-Customer standards and business rules on payloads"
+                igApi -> igScheduler "schedule batch imports/exports and async sync jobs"
+                igApi -> igEventPublisher "publish change events/webhooks to external subscribers"
+                igApi -> igErrorHandler "route transient/permanent integration errors for handling"
+
+                igMappingEngine -> igSapAdapter "invoke SAP-specific connectors with mapped payloads"
+                igMappingEngine -> igQuickBooksAdapter "invoke QuickBooks-specific connectors with mapped payloads"
+
+                igSapAdapter -> igErrorHandler "retry/backoff on SAP connectivity or validation failures"
+                igQuickBooksAdapter -> igErrorHandler "retry/backoff on QuickBooks connectivity or validation failures"
+
+                // External system links
+                igSapAdapter -> sap "exchange product/location data via IDoc/XML/JSON over SAP PI/PO or SAP API Management"
+                sap -> igSapAdapter "push inbound updates (IDoc/webhook) for import"
+
+                igQuickBooksAdapter -> quickbooks "synchronize product/location data via QuickBooks Online/Desktop APIs/SDK"
+                quickbooks -> igQuickBooksAdapter "push inbound changes via webhooks/callbacks for import"
             }
 
             reports = container "Reporting Service" {
@@ -488,19 +549,12 @@ container <name> [description] [technology] [tags] {
                     tags "Reporting"
 
                     reports -> apiGateway "get user traffic and API usage analytics"
-                    reports -> accessData "export statistics and analytics of GIN and Location usage by users and companies"
+                    reports -> eventHubs2 "export statistics and analytics of GIN and Location usage by users and companies"
             }
 
             xsystem -> enterprise_identity "Federated login and authentication"
-            xsystem -> sap "Integration via API"
-            xsystem -> quickbooks "Integration via API"
-            xsystem -> help_portal "Link to help and training content"
 
             webapp -> apiGateway "Communicates via REST"
-            
-            integration -> sap
-            integration -> quickbooks
-            feedback -> help_portal
         }
     }
 
@@ -572,6 +626,22 @@ container <name> [description] [technology] [tags] {
         }
 
         component notify "NotificationService" {
+            include *
+        }
+
+        component sidecar "SideCar" {
+            include *
+        }
+
+        component apiGateway "ApiGateWay" {
+            include *
+        }
+
+        component feedback "HelpAndFeedback" {
+            include *
+        }
+
+        component integration "IntegrationGateway" {
             include *
         }
         
