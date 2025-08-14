@@ -19,21 +19,28 @@ container <name> [description] [technology] [tags] {
         quickbooks = softwareSystem "QuickBooks" "External financial system"
 
         group "Azure Services" {
-            communicationServices   = softwareSystem "Azure Communication Services" "ACS"
-            logicApps               = softwareSystem "Logic Apps" "Outbound webhooks/Teams/Slack" "LogicApps"
-            functions               = softwareSystem "Azure Functions" "Stateless processing" "Functions"
-            serviceBus              = softwareSystem "Azure Service Bus" "Retry & DLQ queues" "ServiceBus, Queue"
-            applicationInsights     = softwareSystem "Application Insights" "Telemetry & metrics" "AppInsights"
-            cosmosDB                = softwareSystem "Azure Cosmos DB" "Prefs, topics, templates" "CosmosDB, Database"
-            cosmosDBfeedbacks       = softwareSystem "Azure Cosmos DB (feedbacks)" "Feedbacks" "CosmosDB, Database"
-            key_vault = softwareSystem "Azure Key Vault" "Secure secret and credential storage" "KeyVault"
-            azure_monitor = softwareSystem "Azure Monitor" "Observability and metrics platform"
-            eventHubs = softwareSystem "Azure Event Hubs" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub"            
-            eventHubs2 = softwareSystem "Azure Event Hubs (CDC)" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub"            
+            communicationServices   = softwareSystem "Azure Communication Services" "ACS, tDevOps"
+            logicApps               = softwareSystem "Logic Apps" "Outbound webhooks/Teams/Slack" "LogicApps, tDevOps"
+            functions               = softwareSystem "Azure Functions" "Stateless processing" "Functions, tDevOps"
+            serviceBus              = softwareSystem "Azure Service Bus" "Retry & DLQ queues" "ServiceBus, Queue, tDevOps"
+            applicationInsights     = softwareSystem "Application Insights" "Telemetry & metrics" "AppInsights, tDevOps"
+            cosmosDB                = softwareSystem "Azure Cosmos DB" "Prefs, topics, templates" "CosmosDB, Database, tDevOps, tDBA"
+            cosmosDBfeedbacks       = softwareSystem "Azure Cosmos DB (feedbacks)" "Feedbacks" "CosmosDB, Database, tDevOps, tDBA"
+            key_vault               = softwareSystem "Azure Key Vault" "Secure secret and credential storage" "KeyVault, tDevOps"
+            azure_monitor           = softwareSystem "Azure Monitor" "Observability and metrics platform" "Monitor,tDevOps"
+            eventHubs               = softwareSystem "Azure Event Hubs" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub, tDevOps"            
+            eventHubs2              = softwareSystem "Azure Event Hubs (CDC)" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub, tDevOps"            
 
-            graph_db = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures"
-            helpBlobStorage = softwareSystem "Azure Blob Storage" "Stores help videos, documents, and media assets for tutorials and training" "BlobStorage"
+            graph_db                = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures" "CosmosDB, Database, tDevOps, tDBA"
+            helpBlobStorage         = softwareSystem "Azure Blob Storage" "Stores help videos, documents, and media assets for tutorials and training" "BlobStorage, tDevOps"
             
+            // Lightweight Reporting Subsystem (ADX + Power BI)
+            // Azure systems (if not already declared elsewhere)
+            adx                     = softwareSystem "Azure Data Explorer" "Fast time-series analytics over API usage (Kusto)" "ADX, tDevOps" 
+            logAnalytics            = softwareSystem "Azure Log Analytics" "Central store for APIM diagnostics and metrics (KQL)" "LogAnalytics, tDevOps"
+            eventHubs3              = softwareSystem "Azure Event Hubs (APIM)" "Optional streaming path for high-volume APIM diagnostics" "EventHub, tDevOps"
+            powerBI                 = softwareSystem "Power BI" "Self-service BI dashboards and scheduled reports" "PowerBI, tDBD"
+
             functions -> cosmosDB "reads changes from Cosmos"
             functions -> eventHubs "emits events"
             functions -> serviceBus "emits events"
@@ -50,73 +57,73 @@ container <name> [description] [technology] [tags] {
                 webauth = component "Authentication/Authorization" {
                     technology "REST, React"
                     description "Handles SSO, role-based access, and permissions using claims-based auth integrated with external Identity Management (OAuth/SAML)"
-                    tags "React, SPA, Web Browser, Auth"
+                    tags "React, SPA, Web Browser, tDesing, tReact, Auth"
                 }
 
                 webpref = component "Prefixes Branch" {
                     technology "REST, React"
                     description "Displays and manages Prefix data, including capacity counters and linking to product/location creation"
-                    tags "React, SPA, Web Browser"
+                    tags "React, SPA, Web Browser, tDesing, tReact"
                 }
 
                 webprod = component "Product Branch" {
                     technology "REST, React"
                     description "Allows users to create, manage, and publish product records with GINs, barcodes, and hierarchies"
-                    tags "React, SPA, Web Browser"
+                    tags "React, SPA, Web Browser, tDesing, tReact"
                 }
 
                 webloc = component "Location Branch" {
                     technology "REST, React"
                     description "Allows users to create, manage, and publish location records with LNs and hierarchical relationships"
-                    tags "React, SPA, Web Browser"
+                    tags "React, SPA, Web Browser, tDesing, tReact"
                 }
 
                 websearch = component "Search/Reporting Branch" {
                     technology "REST, React"
                     description "Enables search, filtering, and reporting for Prefix, GIN, and LN data with export capabilities"
-                    tags "React, SPA, Web Browser, Reporting"
+                    tags "React, SPA, Web Browser, tDesing, tReact, Reporting"
                 }
 
                 webhelp = component "Help/Tutorials Branch" {
                     technology "REST, React"
                     description "Provides contextual help and access to training materials such as videos and webinars"
-                    tags "React, SPA, Web Browser"
+                    tags "React, SPA, Web Browser, tDesing, tReact"
                 }
 
                 webdash = component "Dashboard/Notifications" {
                     technology "REST, React"
                     description "User home screen with alerts, pending tasks, usage counters, and user-specific updates"
-                    tags "React, SPA, Web Browser, Dashboard"
+                    tags "React, SPA, Web Browser, tDesing, tReact, Dashboard"
                 }
 
                 webworkflow = component "Workflow Management" {
                     technology "REST, React"
                     description "Handles record-level workflows for approval, status tracking, and locking mechanisms"
-                    tags "React, SPA, Web Browser, Workflow"
+                    tags "React, SPA, Web Browser, tDesing, tReact, Workflow"
                 }
 
                 webpublish = component "Publishing & Subscriptions" {
                     technology "REST, React"
                     description "Allows users to publish and subscribe to record data visibility with granular permission settings"
-                    tags "React, SPA, Web Browser, Sharing"
+                    tags "React, SPA, Web Browser, tDesing, tReact, Sharing"
                 }
 
                 webimport = component "Import/Export" {
                     technology "REST, React"
                     description "Enables bulk data import/export for products and locations using multiple formats with validation"
-                    tags "React, SPA, Web Browser, Data"
+                    tags "React, SPA, Web Browser, tDesing, tReact, Data"
                 }
 
                 webfeedback = component "Feedback Module" {
                     technology "REST, React"
                     description "Captures user feedback routed to administrators or tracking systems"
-                    tags "React, SPA, Web Browser, Feedback"
+                    tags "React, SPA, Web Browser, tDesing, tReact, Feedback"
                 }
 
                 webaudit = component "Audit Trail Viewer" {
                     technology "REST, React"
                     description "Displays user activity history, record changes, and transfer logs for transparency and compliance"
-                    tags "React, SPA, Web Browser, Audit"
+                    tags "React, SPA, Web Browser, tDesing, tReact, Audit"
                 }
 
                 webauth -> webpref "authorize and redirect"
@@ -146,14 +153,14 @@ container <name> [description] [technology] [tags] {
                     description "Role-based access, SSO integration"
                     tags "Core, Utility, Shared"
 
-                    cprfm = component "Company Profile Manager" "CRUD operations for company profiles and preferences" ".NET 8"
-                    ssoa = component "SSO Auth Handler" "Handles SSO authentication using OAuth2 and SAML protocols" ".NET 8"
-                    flogin = component "Federated Login Adapter" "Manages authentication with external IdPs like Google, Microsoft, Okta" ".NET 8"
-                    uprfm = component "User Profile Manager" "CRUD operations for user profiles and preferences" ".NET 8"
-                    rbac = component "Role & Permission Engine" "Defines and enforces user roles and RBAC policies" ".NET 8"
-                    pswm = component "Password Management Service" "Handles password reset, expiration policies, and recovery workflows" ".NET 8"
+                    cprfm = component "Company Profile Manager" "CRUD operations for company profiles and preferences" ".NET 8" "tNet"
+                    ssoa = component "SSO Auth Handler" "Handles SSO authentication using OAuth2 and SAML protocols" ".NET 8" "tNet"
+                    flogin = component "Federated Login Adapter" "Manages authentication with external IdPs like Google, Microsoft, Okta" ".NET 8" "tNet"
+                    uprfm = component "User Profile Manager" "CRUD operations for user profiles and preferences" ".NET 8" "tNet"
+                    rbac = component "Role & Permission Engine" "Defines and enforces user roles and RBAC policies" ".NET 8" "tNet"
+                    pswm = component "Password Management Service" "Handles password reset, expiration policies, and recovery workflows" ".NET 8" "tNet"
                     
-                    udbs = component "SQL Database" "User Management schema" "SQLServer" "Database" 
+                    udbs = component "SQL Database" "User Management schema" "SQLServer" "Database, tDBA, tDBD" 
 
                     # userMgmt internal dependencies
                     cprfm -> udbs "SQL via ORM. Store/retrieve company profile info"
@@ -173,14 +180,14 @@ container <name> [description] [technology] [tags] {
                     description "Handles prefix licensing, capacity tracking, and lookup for GIN and LN creation"
                     tags "Core, Data"
 
-                    pfstore = component "Prefix Store" "Manages CRUD operations for company prefixes and associated metadata" ".NET 8"
-                    capctr = component "Capacity Tracker" "Tracks numeric indicator usage (GINs/LNs) and available capacity per prefix" ".NET 8"
-                    prefxval = component "Prefix Validator" "Validates prefix format and compliance with business rules" ".NET 8"
-                    pfpubsub = component "Prefix Publish & Subscribe Engine" "Manages visibility and sharing of prefix data with other members" ".NET 8"
-                    pfsearch = component "Prefix Search Service" "Handles advanced search, filtering, and lookup for prefix-related data" ".NET 8"
-                    pfimport = component "Prefix Import/Export Adapter" "Imports/exports prefix records in formats like CSV, XML, Excel" ".NET 8"
+                    pfstore = component "Prefix Store" "Manages CRUD operations for company prefixes and associated metadata" ".NET 8" "tNet"
+                    capctr = component "Capacity Tracker" "Tracks numeric indicator usage (GINs/LNs) and available capacity per prefix" ".NET 8" "tNet"
+                    prefxval = component "Prefix Validator" "Validates prefix format and compliance with business rules" ".NET 8" "tNet"
+                    pfpubsub = component "Prefix Publish & Subscribe Engine" "Manages visibility and sharing of prefix data with other members" ".NET 8" "tNet"
+                    pfsearch = component "Prefix Search Service" "Handles advanced search, filtering, and lookup for prefix-related data" ".NET 8" "tNet"
+                    pfimport = component "Prefix Import/Export Adapter" "Imports/exports prefix records in formats like CSV, XML, Excel" ".NET 8" "tNet"
 
-                    pdbs = component "SQL. Prefix Management Schema" "Prefix Management schema for storing licensed prefixes, attributes, and usage data" "SQLServer" "Database"
+                    pdbs = component "SQL. Prefix Management Schema" "Prefix Management schema for storing licensed prefixes, attributes, and usage data" "SQLServer" "Database, tDBD, tDBA"
 
                     // External Interactions
                     pfstore -> rbac "authorize prefix access"
@@ -207,17 +214,17 @@ container <name> [description] [technology] [tags] {
                     description "Manages creation, editing, hierarchy, and sharing of Global Item Numbers (GINs) and associated product metadata"
                     tags "Core, Product"
 
-                    ginstore = component "GIN Store" "CRUD operations for product records and associated GINs" ".NET 8"
-                    ginassign = component "GIN Assignment Engine" "Automatically or manually assigns unique GINs with check-digit validation" ".NET 8"
-                    ginval = component "GIN Validator" "Ensures GINs and product attributes conform to X-Customer standards" ".NET 8"
-                    ginhier = component "Hierarchy Manager" "Builds and manages GIN hierarchies (e.g., each -> case -> pallet) including visual tools" ".NET 8"
-                    ginimg = component "Image Attachment Service" "Handles product image uploads, association, and formatting" ".NET 8"
-                    ginexport = component "Export & Sheet Generator" "Exports GINs, generates Product Information Sheets, and barcodes in various formats" ".NET 8"
-                    ginshare = component "Publish & Transfer Module" "Controls data publishing, ownership transfer, and sharing for GIN records" ".NET 8"
-                    ginimport = component "GIN Import Adapter" "Supports record import via Excel, CSV, XML with validation and deduplication" ".NET 8"
-                    barcodegen = component "Barcode Generator" "Generates and exports standard-compliant barcodes (e.g., Code128, QR, DataMatrix) for GINs in image formats like PNG, SVG, PDF" ".NET 8"
+                    ginstore = component "GIN Store" "CRUD operations for product records and associated GINs" ".NET 8" "tNet"
+                    ginassign = component "GIN Assignment Engine" "Automatically or manually assigns unique GINs with check-digit validation" ".NET 8" "tNet"
+                    ginval = component "GIN Validator" "Ensures GINs and product attributes conform to X-Customer standards" ".NET 8" "tNet"
+                    ginhier = component "Hierarchy Manager" "Builds and manages GIN hierarchies (e.g., each -> case -> pallet) including visual tools" ".NET 8" "tNet"
+                    ginimg = component "Image Attachment Service" "Handles product image uploads, association, and formatting" ".NET 8" "tNet"
+                    ginexport = component "Export & Sheet Generator" "Exports GINs, generates Product Information Sheets, and barcodes in various formats" ".NET 8" "tNet"
+                    ginshare = component "Publish & Transfer Module" "Controls data publishing, ownership transfer, and sharing for GIN records" ".NET 8" "tNet"
+                    ginimport = component "GIN Import Adapter" "Supports record import via Excel, CSV, XML with validation and deduplication" ".NET 8" "tNet"
+                    barcodegen = component "Barcode Generator" "Generates and exports standard-compliant barcodes (e.g., Code128, QR, DataMatrix) for GINs in image formats like PNG, SVG, PDF" ".NET 8" "tNet"
 
-                    ggdb = component "Graph Database" "Stores product records, GINs, attributes, images, and hierarchy metadata" "Cosmos DB" "Database"
+                    ggdb = component "Graph Database" "Stores product records, GINs, attributes, images, and hierarchy metadata" "Cosmos DB" "Database, tDBD, tDBA"
                     
                     // External Interactions
                     ginMgmt -> capctr "updates prefix capacity after GIN assignment"
@@ -258,16 +265,16 @@ container <name> [description] [technology] [tags] {
                     description "Manages creation, editing, hierarchy, and sharing of Location Numbers (LNs) and related location metadata"
                     tags "Core, Location"
 
-                    lnstore = component "Location Store" "CRUD operations for location records and associated LNs"
-                    lnassign = component "LN Assignment Engine" "Automatically or manually assigns unique LNs with check-digit validation"
-                    lnval = component "Location Validator" "Ensures LNs and location attributes meet format and business standards"
-                    lnhier = component "Hierarchy Manager" "Creates and manages LN hierarchies with flexible levels and visual UI"
-                    lnimport = component "Location Import Adapter" "Supports location record import via Excel, CSV, XML, with validation and deduplication"
-                    lnexport = component "Export & Reporting Module" "Handles exporting, filtering, sorting, and audit of location records"
-                    lnshare = component "Publish & Transfer Module" "Manages record publishing, subscription permissions, and ownership transfers"
-                    lnver = component "Annual Verification Engine" "Tracks and enforces annual verification of location records"
+                    lnstore = component "Location Store" "CRUD operations for location records and associated LNs" ".NET 8" "tNet"
+                    lnassign = component "LN Assignment Engine" "Automatically or manually assigns unique LNs with check-digit validation" ".NET 8" "tNet"
+                    lnval = component "Location Validator" "Ensures LNs and location attributes meet format and business standards" ".NET 8" "tNet"
+                    lnhier = component "Hierarchy Manager" "Creates and manages LN hierarchies with flexible levels and visual UI" ".NET 8" "tNet"
+                    lnimport = component "Location Import Adapter" "Supports location record import via Excel, CSV, XML, with validation and deduplication" ".NET 8" "tNet"
+                    lnexport = component "Export & Reporting Module" "Handles exporting, filtering, sorting, and audit of location records" ".NET 8" "tNet"
+                    lnshare = component "Publish & Transfer Module" "Manages record publishing, subscription permissions, and ownership transfers" ".NET 8" "tNet"
+                    lnver = component "Annual Verification Engine" "Tracks and enforces annual verification of location records" ".NET 8" "tNet"
 
-                    lgdb = component "Graph Database" "Stores location records, LNs, hierarchy structures, and verification logs" "Cosmos DB" "Database"
+                    lgdb = component "Graph Database" "Stores location records, LNs, hierarchy structures, and verification logs" "Cosmos DB" "Database, tDBD, tDBA"
                     /*
                     kv = component "Key Vault Reader" "Securely retrieves configuration and business rule secrets" "Azure Key Vault" "Infrastructure"
                     */
@@ -309,20 +316,15 @@ container <name> [description] [technology] [tags] {
                     description "Provides search, view, subscription, and export functionality for shared Prefix, GIN, and LN data"
                     tags "Core, Consumer, Search"
 
-                    adsearch = component "Access Search Engine" "Performs advanced search and filtering across Prefix, GIN, and LN datasets"
-                    adview = component "Record Viewer" "Displays record details, including basic/full data and hierarchy"
-                    adsub = component "Subscription Manager" "Handles subscription requests for accessing full record views"
-                    adgroup = component "Group Access Controller" "Processes join requests for controlled access groups"
-                    adexport = component "Export Adapter" "Exports selected records to formats like CSV, Excel, XML, and prints"
-                    adaccess = component "Access Rights Evaluator" "Determines data access level based on user's subscription, group membership, or public access"
-                    adpay = component "Ad-hoc Access Info Module" "Informs users about external payment options for access (outside of system)"
+                    adsearch = component "Access Search Engine" "Performs advanced search and filtering across Prefix, GIN, and LN datasets" ".NET 8" "tNet"
+                    adview = component "Record Viewer" "Displays record details, including basic/full data and hierarchy" ".NET 8" "tNet"
+                    adsub = component "Subscription Manager" "Handles subscription requests for accessing full record views" ".NET 8" "tNet"
+                    adgroup = component "Group Access Controller" "Processes join requests for controlled access groups" ".NET 8" "tNet"
+                    adexport = component "Export Adapter" "Exports selected records to formats like CSV, Excel, XML, and prints" ".NET 8" "tNet"
+                    adaccess = component "Access Rights Evaluator" "Determines data access level based on user's subscription, group membership, or public access" ".NET 8" "tNet"
+                    adpay = component "Ad-hoc Access Info Module" "Informs users about external payment options for access (outside of system)" ".NET 8" "tNet"
                     
-                    esdb = component "Read-Optimized Vector Database" {
-                        description "Indexed subset of shared Prefix, GIN, and LN records, optimized for fast queries"
-                        technology "Elasticsearch"
-                        tags "Database" 
-                    }
-                    
+                    esdb = component "Read-Optimized Vector Database" "Indexed subset of shared Prefix, GIN, and LN records, optimized for fast queries" "Elasticsearch" "Database, tDBD, tDBA"                     
                     /*
                     kv = component "Key Vault Reader" "Retrieves secure config such as API keys or export format settings" "Azure Key Vault" "Infrastructure"
                     */
@@ -364,10 +366,10 @@ container <name> [description] [technology] [tags] {
                     description "Shared utility functions such as Key Vault access, centralized logging, event-based notifications"
                     tags "Core, Utility, Shared"
 
-                    secrets = component "Secrets Loader" "Fetches secrets/configs from Azure Key Vault" ".NET 8"
-                    logger = component "Audit Logger" "Sends authentication and user change audit events" ".NET 8"
-                    metrix = component "Metrics Exporter" "Pushes login and performance metrics to Azure Monitor" ".NET 8"
-                    notification = component "Notification Dispatcher" "Sends password reset and other events to Notification Service" ".NET 8"
+                    secrets = component "Secrets Loader" "Fetches secrets/configs from Azure Key Vault" ".NET 8" "tNet"
+                    logger = component "Audit Logger" "Sends authentication and user change audit events" ".NET 8" "tNet"
+                    metrix = component "Metrics Exporter" "Pushes login and performance metrics to Azure Monitor" ".NET 8" "tNet"
+                    notification = component "Notification Dispatcher" "Sends password reset and other events to Notification Service" ".NET 8" "tNet"
 
                     secrets -> key_vault
                     logger -> azure_monitor
@@ -383,11 +385,11 @@ container <name> [description] [technology] [tags] {
                 description "Central entry point for all RESTful APIs; enforces policies, routing, throttling, monitoring, and legacy 3Scale migration"
                 tags "Infrastructure, Gateway, Azure"
 
-                configmgr = component "3Scale Config Migrator" "Migrates existing API definitions, plans, rate limits, and policies from 3Scale to Azure API Management"
-                routing = component "API Router" "Routes requests to internal services (GIN, Location, Prefix, Access Data, User Mgmt) based on path, method, and version"
-                policy = component "Policy Enforcement Engine" "Applies throttling, quota, CORS, caching, IP filtering, and JWT validation policies"
-                analytics = component "Telemetry & Analytics Module" "Captures request metrics, logs, errors, and usage analytics for monitoring and reporting"
-                docportal = component "Developer Portal" "Provides auto-generated API documentation, testing sandbox, and subscription access to consumers"
+                configmgr = component "3Scale Config Migrator" "Migrates existing API definitions, plans, rate limits, and policies from 3Scale to Azure API Management" "APIM" "tDevOps"
+                routing = component "API Router" "Routes requests to internal services (GIN, Location, Prefix, Access Data, User Mgmt) based on path, method, and version" "APIM" "tDevOps"
+                policy = component "Policy Enforcement Engine" "Applies throttling, quota, CORS, caching, IP filtering, and JWT validation policies" "APIM" "tDevOps"
+                analytics = component "Telemetry & Analytics Module" "Captures request metrics, logs, errors, and usage analytics for monitoring and reporting" "APIM" "tDevOps"
+                docportal = component "Developer Portal" "Provides auto-generated API documentation, testing sandbox, and subscription access to consumers" "APIM" "tDevOps"
 
                 // External Consumers
                 // apiGateway -> publicConsumer "allows public and registered users to access shared data"
@@ -410,13 +412,13 @@ container <name> [description] [technology] [tags] {
                 description "Consumes CDC events, denormalizes to search docs, and bulk-indexes to Elasticsearch"
                 tags "Integration, ETL, Search"
 
-                sub = component "Event Consumer" "Consumes gin.* and location.* from Event Hubs"
-                xform = component "Denormalizer" "Flattens graph hierarchies & selected attributes into search-friendly documents"
-                dedup = component "Idempotency Store" "Tracks processed event IDs/versions to ensure exactly-once semantics" "Redis" "Cache"
-                bulk = component "Elasticsearch Bulk Indexer" "Batches writes/updates/deletes to Elasticsearch with backoff and DLQ"
+                sub = component "Event Consumer" "Consumes gin.* and location.* from Event Hubs" ".NET 8" "tNet"
+                xform = component "Denormalizer" "Flattens graph hierarchies & selected attributes into search-friendly documents" ".NET 8" "tNet"
+                dedup = component "Idempotency Store" "Tracks processed event IDs/versions to ensure exactly-once semantics" "Redis, .NET 8" "Cache, tDevOps"
+                bulk = component "Elasticsearch Bulk Indexer" "Batches writes/updates/deletes to Elasticsearch with backoff and DLQ" ".NET 8" "tNet"
 
-                ises = component "Elasticsearch Cluster" "Read-optimized indices: prefixes, gins, lns (+ alias per version)" "Elasticsearch" "Database"
-                dlq = component "Dead Letter Queue" "Unprocessable events for replay/inspection" "Azure Storage Queue" "Queue"
+                ises = component "Elasticsearch Cluster" "Read-optimized indices: prefixes, gins, lns (+ alias per version)" "Elasticsearch" "Database, tDevOps"
+                dlq = component "Dead Letter Queue" "Unprocessable events for replay/inspection" "Azure Storage Queue" "Queue, tDevOps"
 
                 // Links
                 indexing -> eventHubs "subscribes to events"
@@ -432,15 +434,15 @@ container <name> [description] [technology] [tags] {
                 description "Handles all notifications and preferences"
                 tags "Core, Utility, Shared"
 
-                notifEventConsumer = component "EventHub Consumer" "Consumes domain/system events and converts them into notification intents" ".NET 8" "Notification, Ingest"
-                notifOrchestrator = component "Notification Orchestrator" "Routes intents to channels, applies routing rules, and coordinates multi-channel fan-out" ".NET 8" "Notification, Core"
-                notifPreferenceManager = component "Preference & Opt-In Manager" "Stores per-user/company preferences, opt-ins, quiet hours, and frequency settings" ".NET 8" "Notification, Privacy"
-                notifRetryDLQ = component "Retry & DLQ Processor" "Retries transient failures and moves poison messages to dead letter queue" ".NET 8" "Notification, Reliability"
-                notifDeliveryTracker = component "Delivery Status & Bounce Tracker" "Tracks sends, opens, clicks, bounces, and complaints; updates user/channel health" ".NET 8" "Notification, Metrics"
-                notifEmailAdapter = component "Email Adapter" "Sends emails via SMTP/SendGrid with templating and attachments support" ".NET 8" "Notification, Channel, Email"
-                notifSmsAdapter = component "SMS Adapter" "Sends text messages via Twilio/Azure Communication Services" ".NET 8" "Notification, Channel, SMS"
-                notifWebhookAdapter = component "Webhook/ChatOps Adapter" "Delivers messages to Slack/Teams/webhooks for operational alerts" ".NET 8" "Notification, Channel, Webhook"
-                notifScheduler = component "Digest & Scheduling Service" "Schedules digests, reminders, and time-windowed deliveries" ".NET 8" "Notification, Scheduling"
+                notifEventConsumer = component "EventHub Consumer" "Consumes domain/system events and converts them into notification intents" ".NET 8" "Notification, Ingest, tNet"
+                notifOrchestrator = component "Notification Orchestrator" "Routes intents to channels, applies routing rules, and coordinates multi-channel fan-out" ".NET 8" "Notification, Core, tNet"
+                notifPreferenceManager = component "Preference & Opt-In Manager" "Stores per-user/company preferences, opt-ins, quiet hours, and frequency settings" ".NET 8" "Notification, Privacy, tNet"
+                notifRetryDLQ = component "Retry & DLQ Processor" "Retries transient failures and moves poison messages to dead letter queue" ".NET 8" "Notification, Reliability, tNet"
+                notifDeliveryTracker = component "Delivery Status & Bounce Tracker" "Tracks sends, opens, clicks, bounces, and complaints; updates user/channel health" ".NET 8" "Notification, Metrics, tNet"
+                notifEmailAdapter = component "Email Adapter" "Sends emails via SMTP/SendGrid with templating and attachments support" ".NET 8" "Notification, Channel, Email, tNet"
+                notifSmsAdapter = component "SMS Adapter" "Sends text messages via Twilio/Azure Communication Services" ".NET 8" "Notification, Channel, SMS, tNet"
+                notifWebhookAdapter = component "Webhook/ChatOps Adapter" "Delivers messages to Slack/Teams/webhooks for operational alerts" ".NET 8" "Notification, Channel, Webhook, tNet"
+                notifScheduler = component "Digest & Scheduling Service" "Schedules digests, reminders, and time-windowed deliveries" ".NET 8" "Notification, Scheduling, tNet"
 
                 notifEventConsumer -> notifOrchestrator "routes through the appropriate delivery workflows"
                 notifEventConsumer -> notifRetryDLQ "sends failed events for later processing"
@@ -472,15 +474,15 @@ container <name> [description] [technology] [tags] {
                 technology ".NET 8"
                 tags "Core, Reporting"
 
-                helpContentManager = component "Help Content Manager" "CRUD operations for help articles, FAQs, and tutorial metadata" ".NET 8" "Help, Content"
-                helpSearchEngine = component "Help Search Engine" "Indexes help content and enables keyword/topic-based search" ".NET 8" "Help, Search"
-                helpContextResolver = component "Contextual Help Resolver" "Determines and displays relevant help content based on the user's current module or action" ".NET 8" "Help, Context"
-                helpLocalizationEngine = component "Help Localization Engine" "Provides localized help content in multiple languages" ".NET 8" "Help, Localization"
-                feedbackCollector = component "Feedback Collector" "Captures user feedback from the UI, including comments, ratings, and issue reports" ".NET 8" "Feedback, Capture"
-                feedbackRouter = component "Feedback Router" "Routes feedback to administrators or appropriate service teams" ".NET 8" "Feedback, Routing"
-                feedbackAnalytics = component "Feedback Analytics" "Aggregates and analyzes feedback for trends, satisfaction scores, and improvement areas" ".NET 8" "Feedback, Analytics"
-                feedbackNotification = component "Feedback Notification" "Sends alerts to admins when new feedback or critical issues are submitted" ".NET 8" "Feedback, Notification"
-                helpApi = component "Help & Feedback API" "Provides REST endpoints for retrieving help content and submitting feedback" ".NET 8" "Help, API"
+                helpContentManager = component "Help Content Manager" "CRUD operations for help articles, FAQs, and tutorial metadata" ".NET 8" "Help, Content, tNet"
+                helpSearchEngine = component "Help Search Engine" "Indexes help content and enables keyword/topic-based search" ".NET 8" "Help, Search, tNet"
+                helpContextResolver = component "Contextual Help Resolver" "Determines and displays relevant help content based on the user's current module or action" ".NET 8" "Help, Context, tNet"
+                helpLocalizationEngine = component "Help Localization Engine" "Provides localized help content in multiple languages" ".NET 8" "Help, Localization, tNet"
+                feedbackCollector = component "Feedback Collector" "Captures user feedback from the UI, including comments, ratings, and issue reports" ".NET 8" "Feedback, Capture, tNet"
+                feedbackRouter = component "Feedback Router" "Routes feedback to administrators or appropriate service teams" ".NET 8" "Feedback, Routing, tNet"
+                feedbackAnalytics = component "Feedback Analytics" "Aggregates and analyzes feedback for trends, satisfaction scores, and improvement areas" ".NET 8" "Feedback, Analytics, tNet"
+                feedbackNotification = component "Feedback Notification" "Sends alerts to admins when new feedback or critical issues are submitted" ".NET 8" "Feedback, Notification, tNet"
+                helpApi = component "Help & Feedback API" "Provides REST endpoints for retrieving help content and submitting feedback" ".NET 8" "Help, API, tNet"
             
                 helpApi -> helpContentManager "retrieves and manages help articles and tutorials"
                 helpApi -> helpSearchEngine "performs keyword and topic-based help searches"
@@ -511,14 +513,14 @@ container <name> [description] [technology] [tags] {
                 technology ".NET 8"
                 tags "Core, Reporting"
 
-                igApi = component "Integration Gateway API" "Centralized API interface for importing/exporting records with external systems" "Integration, API"
-                igSapAdapter = component "SAP Adapter" "Handles data exchange with SAP for product, location, and prefix records; supports IDoc/XML/JSON formats" "Integration, SAP"
-                igQuickBooksAdapter = component "QuickBooks Adapter" "Manages data synchronization with QuickBooks Online/Desktop for product and location records" "Integration, QuickBooks"
-                igMappingEngine = component "Data Mapping & Transformation Engine" "Transforms internal GIN/LN/Prefix schema to and from external system formats" "Integration, Transformation"
-                igValidationEngine = component "Validation & Compliance Engine" "Validates incoming external data against X-Customer standards and business rules" "Integration, Validation"
-                igScheduler = component "Integration Scheduler" "Schedules batch imports/exports and coordinates asynchronous data sync jobs" "Integration, Scheduling"
-                igEventPublisher = component "Change Event Publisher" "Publishes internal change events to external systems via webhooks, APIs, or message queues" "Integration, Eventing"
-                igErrorHandler = component "Error Handling & Retry Manager" "Captures integration errors, retries transient failures, and logs issues for review" "Integration, Reliability"
+                igApi = component "Integration Gateway API" "Centralized API interface for importing/exporting records with external systems" ".NET 8" "Integration, API, tNet"
+                igSapAdapter = component "SAP Adapter" "Handles data exchange with SAP for product, location, and prefix records; supports IDoc/XML/JSON formats" ".NET 8" "Integration, SAP, tNet"
+                igQuickBooksAdapter = component "QuickBooks Adapter" "Manages data synchronization with QuickBooks Online/Desktop for product and location records" ".NET 8" "Integration, QuickBooks, tNet"
+                igMappingEngine = component "Data Mapping & Transformation Engine" "Transforms internal GIN/LN/Prefix schema to and from external system formats" ".NET 8" "Integration, Transformation, tNet"
+                igValidationEngine = component "Validation & Compliance Engine" "Validates incoming external data against X-Customer standards and business rules" ".NET 8" "Integration, Validation, tNet"
+                igScheduler = component "Integration Scheduler" "Schedules batch imports/exports and coordinates asynchronous data sync jobs" ".NET 8" "Integration, Scheduling, tNet"
+                igEventPublisher = component "Change Event Publisher" "Publishes internal change events to external systems via webhooks, APIs, or message queues" ".NET 8" "Integration, Eventing, tNet"
+                igErrorHandler = component "Error Handling & Retry Manager" "Captures integration errors, retries transient failures, and logs issues for review" ".NET 8" "Integration, Reliability, tNet"
 
                 integration -> accessData "import and export shared Prefix, GIN, and LN data for external systems"
 
@@ -544,12 +546,42 @@ container <name> [description] [technology] [tags] {
             }
 
             reports = container "Reporting Service" {
-                    description "Scheduled reports, audit, usage logs"
-                    technology "Databricks, Power BI"
-                    tags "Reporting"
+                description "Near real-time API usage analytics using Log Analytics → ADX, served via Power BI"
+                technology "ADX, Power BI"
+                tags "Reporting, Azure"
 
-                    reports -> apiGateway "get user traffic and API usage analytics"
-                    reports -> eventHubs2 "export statistics and analytics of GIN and Location usage by users and companies"
+                apimDiag = component "APIM Diagnostic Settings" "Emits request logs, metrics, and traces" "APIM, Diagnostics" "tDevOps"
+                laExport = component "Log Analytics Exporter" "Continuous export from Log Analytics to ADX tables" "KQL, Export" "tDevOps"
+                evhIngest = component "Event Hub Ingest (optional)" "Alternative path: APIM → Event Hubs → ADX ingestion batching" "Streaming, Optional" "tDevOps"
+                adxDb = component "ADX Database & Tables" "Kusto DB with tables: Requests, Aggregates, Errors; retention + caching policies" "ADX, Kusto" "tDevOps, tDBD, tDBA"
+                adxFuncs = component "ADX Update Policies" "Materialize rollups (hour/day/week), parse URL paths, compute percentiles" "ADX, Policies" "tDevOps, tDBD, tDBA"
+                rptModels = component "Power BI Semantic Model" "Datasets/Measures (RLS by company/role); scheduled or DirectQuery to ADX" "PowerBI, Dataset" "tDevOps, tDBD, tDBA"
+                rptDash = component "Power BI Reports & Dashboards" "Usage heatmaps, latency SLAs, error breakdowns; embeddable in SPA" "PowerBI, Reports" "tDevOps, tDBD, tDBA"
+
+
+                reports -> eventHubs2 "export statistics and analytics of GIN and Location usage by users and companies"
+
+                // Links from API Gateway (APIM) to analytics
+                apiGateway -> apimDiag "send request/response logs and metrics (diagnostic settings)"
+                apimDiag -> logAnalytics "write API logs to Log Analytics"
+                apimDiag -> eventHubs3 "stream diagnostics to Event Hubs (optional high-volume path)"
+
+                // Log Analytics → ADX
+                logAnalytics -> laExport "continuous export (KQL-based) to ADX tables"
+
+                // Event Hubs → ADX (optional)
+                eventHubs3 -> evhIngest "subscribe and batch to ADX ingestion commands"
+                evhIngest -> adxDb "write to Kusto tables"
+
+                // Inside ADX
+                laExport -> adxDb "ingest curated API usage data"
+                adxDb -> adxFuncs "apply update policies/materialized aggregates"
+                adxFuncs -> adxDb "persist rollups to aggregate tables"
+
+                // Serving to BI
+                adxDb -> rptModels "DirectQuery or import via ADX connector"
+                rptModels -> rptDash "serve curated measures and visuals"
+                rptDash -> powerBI "publish/refresh dashboards and embed tokens"
             }
 
             xsystem -> enterprise_identity "Federated login and authentication"
@@ -566,6 +598,7 @@ container <name> [description] [technology] [tags] {
 
         container xsystem "ContainerDiagram" {
             include *
+            exclude logAnalytics eventHubs3 powerBI
         }
 
         component userMgmt "UserMgmtComponents" {
@@ -642,6 +675,10 @@ container <name> [description] [technology] [tags] {
         }
 
         component integration "IntegrationGateway" {
+            include *
+        }
+
+        component reports "ReportingModule" {
             include *
         }
         
