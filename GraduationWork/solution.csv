@@ -1,0 +1,151 @@
+"component_name","component_description","risk_level","tNet","tDBD","tDBA","tDesing","tReact","tDevOps"
+
+"SPA Web Application","Single Page Application providing end-user UI for all modules"
+"Authentication/Authorization","Handles SSO, role-based access, and permissions using claims-based auth integrated with external Identity Management (OAuth/SAML)","High",12,0,0,3,10,3
+"Prefixes Branch","Displays and manages Prefix data, including capacity counters and linking to product/location creation","Medium",8,0,0,3,10,2
+"Product Branch","Create/manage product records (GINs), images, hierarchies, barcodes, and exports","High",15,0,0,4,14,3
+"Location Branch","Create/manage location records (LNs), hierarchies, verification, and exports","High",15,0,0,4,14,3
+"Search/Reporting Branch","End-user search, filters, saved views, and report launchers","Medium",8,0,0,3,10,2
+"Help/Tutorials Branch","Contextual help, tutorials, and training links embedded in SPA","Low",4,0,0,4,8,1
+"Dashboard/Notifications","User start screen with alerts, tasks, counters, and shortcuts","Medium",8,0,0,4,12,2
+"Workflow Management","Record approval, status tracking, and locking UX","High",12,0,0,4,12,2
+"Publishing & Subscriptions","UI to publish/share data and manage subscriptions","Medium",10,0,0,3,10,2
+"Import/Export","Bulk import/export UX with progress, validation, and error review","Medium",10,0,0,3,10,2
+"Feedback Module","Capture user feedback, ratings, and route to admins","Low",6,0,0,2,8,1
+"Audit Trail Viewer","Display record history and change logs","Medium",8,0,0,2,8,1
+"Sidecar Utility Service (Frontend)","Shared client-side utilities (logging hooks, health pings, feature flags)","Low",4,0,0,1,6,1
+
+"Prefix Management Service","Handles prefix licensing, capacity tracking, and lookup for GIN/LN creation"
+"Prefix Store","CRUD operations for company prefixes and metadata","Medium",12,6,3,0,0,2
+"Capacity Tracker","Tracks usage and available capacity per prefix","Medium",10,4,2,0,0,2
+"Prefix Validator","Validates prefix format and compliance rules","Medium",8,2,0,0,0,1
+"Prefix Publish & Subscribe Engine","Manages visibility and sharing of prefix data","Medium",10,2,0,0,0,2
+"Prefix Search Service","Advanced search and filtering for prefix data","Medium",8,2,0,0,0,1
+"Prefix Import/Export Adapter","Bulk import/export of prefix records","Medium",8,2,0,0,0,2
+"SQL Database (Prefix)","Prefix management schema and persistence","Medium",4,8,6,0,0,3
+"Key Vault Reader","Secure retrieval of secrets/credentials","Low",3,0,0,0,0,1
+
+"GIN Management Service","Manages creation, editing, hierarchy, sharing of GINs and product metadata"
+"GIN Store","CRUD for product records and GINs","High",14,6,3,0,0,2
+"GIN Assignment Engine","Auto/manual assignment with check-digit","High",12,4,2,0,0,2
+"GIN Validator","Validates GINs and product attributes","Medium",8,3,0,0,0,1
+"Hierarchy Manager (GIN)","Build/manage product hierarchies","High",12,4,0,0,0,2
+"Image Attachment Service","Upload and manage product images","Medium",8,2,0,0,0,1
+"Export & Sheet Generator","Generate product sheets and barcodes","Medium",10,2,0,0,0,2
+"Barcode Generator","Create standard-compliant barcodes (PNG/SVG/PDF)","Medium",8,0,0,0,0,1
+"Publish & Transfer Module","Publishing and ownership transfer","Medium",8,2,0,0,0,2
+"GIN Import Adapter","Import via Excel/CSV/XML with dedupe","Medium",8,2,0,0,0,2
+"SQL Database (GIN)","Product/Gin schema and persistence","Medium",4,8,6,0,0,3
+"Key Vault Reader","Secrets for image/barcode/export services","Low",3,0,0,0,0,1
+
+"Location Management Service","Manages creation, editing, hierarchy, sharing of LNs and location metadata"
+"Location Store","CRUD for location records and LNs","High",14,6,3,0,0,2
+"LN Assignment Engine","Auto/manual LN assignment with check-digit","High",12,4,2,0,0,2
+"Location Validator","Validates LNs and attributes","Medium",8,3,0,0,0,1
+"Hierarchy Manager (Location)","Build/manage location hierarchies","High",12,4,0,0,0,2
+"Location Import Adapter","Import via Excel/CSV/XML with dedupe","Medium",8,2,0,0,0,2
+"Export & Reporting Module","Exports and simple reports for LNs","Medium",8,2,0,0,0,2
+"Publish & Transfer Module","Publishing and ownership transfer","Medium",8,2,0,0,0,2
+"Annual Verification Engine","Tracks/enforces annual verification","Medium",8,2,0,0,0,2
+"SQL Database (Location)","Location/LN schema and persistence","Medium",4,8,6,0,0,3
+"Key Vault Reader","Secrets for adapters/exports","Low",3,0,0,0,0,1
+
+"Access Data Service","Provides search, view, subscription, and export functionality for shared Prefix, GIN, and LN data"
+"Access Search Engine","Performs advanced search and filtering across Prefix, GIN, and LN datasets","Medium",10,0,0,0,0,2
+"Record Viewer","Displays record details, including basic/full data and hierarchy","Medium",8,0,0,0,0,2
+"Subscription Manager","Handles subscription requests for accessing full record views","High",15,0,0,0,0,3
+"Group Access Controller","Processes join requests for controlled groups","Medium",8,0,0,0,0,2
+"Export Adapter","Exports records to CSV/Excel/XML and prints","Medium",8,0,0,0,0,2
+"Access Rights Evaluator","Determines view level based on roles/subscriptions","High",12,0,0,0,0,3
+"Ad-hoc Access Info Module","Surfaces payment info for ad-hoc access (out of scope payments)","Low",4,0,0,0,0,1
+"Read-Optimized Store (Elasticsearch)","Indexed shared data optimized for queries","Medium",6,6,4,0,0,4
+"Key Vault Reader","Secrets for export/index access","Low",3,0,0,0,0,1
+
+"API Gateway (Azure APIM)","Central API entry; policies, routing, throttling, analytics; migration from 3Scale"
+"3Scale Config Migrator","Migrate definitions, plans, policies to APIM","High",12,0,0,0,0,8
+"API Router","Route to internal services by path/version","Medium",8,0,0,0,0,5
+"Policy Enforcement Engine","JWT, quota, CORS, caching, IP filtering","High",12,0,0,0,0,8
+"Telemetry & Analytics Module","Collect usage metrics and errors","Medium",6,0,0,0,0,5
+"Developer Portal","Docs, try-it, subscription keys","Medium",8,0,0,4,0,4
+
+"Notification Service","Multi-channel notifications (email, SMS, push, in-app) with templates and preferences"
+"EventHub Consumer","Consumes events and creates notification intents","Medium",8,0,0,0,0,3
+"Notification Orchestrator","Routing, rules, multi-channel fan-out","High",12,0,0,0,0,4
+"Template & Localization Engine","Render content with variables and i18n","Medium",8,0,0,2,0,2
+"Preference & Opt-In Manager","User/company preferences and quiet hours","Medium",8,2,0,0,0,2
+"Topic & Subscription Router","Targeted delivery by topic/group","Medium",8,0,0,0,0,2
+"Policy & Rate Limit Engine","Throttling, dedupe, suppression","Medium",8,0,0,0,0,2
+"Retry & DLQ Processor","Retries and dead-letter handling","Medium",6,0,0,0,0,2
+"Delivery Status & Bounce Tracker","Track sends, opens, bounces","Medium",6,0,0,0,0,2
+"In-App Notification Hub","WebSocket/WebPush delivery + unread state","Medium",8,0,0,2,6,3
+"Email Adapter","Send via ACS/SMTP","Low",5,0,0,0,0,2
+"SMS Adapter","Send via ACS/Twilio","Low",5,0,0,0,0,2
+"Mobile/Web Push Adapter","Push via FCM/APNS/WebPush","Low",6,0,0,0,0,2
+"Webhook/ChatOps Adapter","Slack/Teams/webhooks for ops","Low",5,0,0,0,0,2
+"Digest & Scheduling Service","Schedules digests/reminders","Medium",6,0,0,0,0,2
+"Notification API","APIs for intents/templates/preferences","Medium",8,0,0,0,0,3
+"Key Vault Reader","Secrets and credentials","Low",3,0,0,0,0,1
+"Audit & Compliance Logger","Immutable audit for notifications","Medium",6,2,0,0,0,2
+
+"Help & Feedback Service","Help content, tutorials, search, localization, and feedback capture"
+"Help Content Manager","CRUD for articles, FAQs, tutorials","Medium",8,2,0,2,0,2
+"Help Media Storage","Store videos, images, docs","Low",4,0,0,0,0,2
+"Help Search Engine","Index and query help content","Medium",6,2,0,0,0,2
+"Contextual Help Resolver","Serve context-aware help items","Medium",6,0,0,2,4,2
+"Help Localization Engine","Localized content support","Medium",6,0,0,2,0,1
+"Feedback Collector","Capture comments/ratings/issues","Medium",6,0,0,2,6,2
+"Feedback Router","Route feedback to admins/teams","Low",4,0,0,0,0,1
+"Feedback Analytics","Aggregate and analyze feedback","Medium",6,2,0,0,0,2
+"Feedback Notification","Notify admins on new/critical items","Low",4,0,0,0,0,1
+"Help & Feedback API","REST endpoints for help/feedback","Medium",8,0,0,0,0,2
+"Key Vault Reader","Secrets for integrations","Low",3,0,0,0,0,1
+"Audit Logger","Record content and admin changes","Medium",5,2,0,0,0,2
+
+"Integration Gateway","Adapters and pipelines for SAP and QuickBooks integrations"
+"Integration Gateway API","Central API for imports/exports","Medium",8,0,0,0,0,3
+"SAP Adapter","IDoc/XML/JSON via SAP PI/PO or APIs","High",14,2,0,0,0,8
+"QuickBooks Adapter","QBO/QBD API/SDK sync","High",12,2,0,0,0,6
+"Data Mapping & Transformation Engine","Map internal↔external schemas","High",12,2,0,0,0,4
+"Validation & Compliance Engine","Validate against standards/rules","Medium",8,2,0,0,0,2
+"Integration Scheduler","Batch job coordination","Medium",6,0,0,0,0,2
+"Change Event Publisher","Publish webhooks/queues to externals","Medium",8,0,0,0,0,3
+"Error Handling & Retry Manager","Retries/backoff and logging","Medium",6,0,0,0,0,2
+"Integration Audit Logger","Full transaction logging","Medium",6,2,0,0,0,2
+"Key Vault Reader","External creds/certs","Low",3,0,0,0,0,1
+
+"Search Indexing Pipeline","Consumes CDC events and indexes denormalized docs into Elasticsearch"
+"Event Consumer","Subscribe to gin.*, location.*, prefix.\*","Medium",8,0,0,0,0,3
+"Denormalizer","Flatten graph/hierarchy to search docs","High",12,2,0,0,0,4
+"Idempotency Store","Track processed event versions","Medium",6,2,0,0,0,2
+"Elasticsearch Bulk Indexer","Batch upserts/deletes with backoff","High",12,2,0,0,0,4
+"Dead Letter Queue","Hold poison messages for replay","Low",4,0,0,0,0,2
+"Elasticsearch Cluster","Search indices & aliases","Medium",4,6,6,0,0,6
+
+"Lightweight Reporting (ADX + Power BI)","Near real-time API usage analytics via Log Analytics → ADX, served in Power BI"
+"APIM Diagnostic Settings","Emit request logs and metrics","Low",3,0,0,0,0,3
+"Log Analytics Exporter","Continuous export to ADX","Medium",6,2,0,0,0,4
+"Event Hub Ingest (optional)","Stream diagnostics to ADX","Medium",6,0,0,0,0,4
+"ADX Database & Tables","Kusto tables with policies","Medium",4,4,2,0,0,4
+"ADX Update Policies","Materialize rollups and parsing","Medium",5,2,0,0,0,3
+"Power BI Semantic Model","Datasets/measures with RLS","Medium",4,0,0,2,0,2
+"Power BI Reports & Dashboards","Usage heatmaps, SLAs, errors","Medium",3,0,0,4,0,2
+
+"Resilience & DR","Cross-region HA/DR, backups, automation, and chaos validation"
+"Azure Front Door (Global)","Anycast entry, WAF, health probes","Medium",6,0,0,0,0,8
+"Traffic Manager (Optional)","DNS failover for non-HTTP endpoints","Low",4,0,0,0,0,4
+"APIM - Region A","Primary gateway (Premium)","Medium",6,0,0,0,0,6
+"APIM - Region B","Secondary gateway (Premium)","Medium",6,0,0,0,0,6
+"App Tier - Region A","Stateless apps/functions (active)","Medium",6,0,0,0,0,5
+"App Tier - Region B","Stateless apps/functions (warm/active)","Medium",6,0,0,0,0,5
+"Cosmos DB (Multi-Write)","Multi-region writes, auto failover","High",6,8,6,0,0,8
+"Azure SQL (Failover Group)","Geo-replicated with listener","High",6,8,8,0,0,8
+"Event Hubs (Geo-DR Alias)","Paired namespaces with alias","High",6,2,4,0,0,8
+"Service Bus (Geo-DR)","Paired namespaces/alias","High",6,2,4,0,0,8
+"Blob Storage (RA-GZRS)","Geo-redundant, read-access","Medium",4,2,2,0,0,4
+"Elasticsearch (CCR)","Cross-cluster replication","High",6,4,6,0,0,8
+"ADX (Follower DB)","Follower DB for DR","Medium",4,2,2,0,0,5
+"Key Vault (Geo)","Geo-replicated, purge protection","Medium",4,0,0,0,0,4
+"ASR/Backup","Backups and runbook ties","Medium",4,2,2,0,0,6
+"Log Analytics + App Insights","Telemetry and alerts","Medium",4,0,0,0,0,4
+"Failover Runbooks (Automation)","One-click failover orchestration","High",8,0,0,0,0,10
+"Chaos Studio","Fault injection and game days","Medium",4,0,0,0,0,4

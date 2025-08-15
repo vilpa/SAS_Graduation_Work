@@ -173,3 +173,31 @@ workspace "X-Customer Member Application" "C4 Model for Target Solution Architec
 "Location Branch"
 "Search/Reporting Branch"
 "Help/Tutorials Branch"
+
+
+workspace.dsl consists of all modules of the solution. 
+
+I need resource plan for the solution.
+All components are listed in workspace.dsl
+The resource plan should be generated in CSV format:
+1)component_name - Component name
+2)component_description - Component description
+3)risk_level - one of three levels [Low, Medium, High]
+Next four columns consist efforn in working days for the teams which depends on risk level. 
+4)tNet - BackEnd developers (.NET)
+5)tDBD - DB developers
+6)tDBA - DB admins
+7)tDesing - UX design
+8)tReact - UI developers
+9)tDevOps - DevOps
+Components records in dsl format have the following structure: 
+variable_name = component component_name component_description component_technology component_tags.
+component_tags element consists of tags, one or more of the tags can be a team name. 
+You should extract team from tags field and estimate effort in working days for each of the components.
+Components records should be grouped by containers.
+For instanse, first records for Access Data Service should be like that:
+"component_name","component_description","risk_level","tNet","tDBD","tDBA","tDesing","tReact"
+"Access Data Service", "Provides search, view, subscription, and export functionality for shared Prefix, GIN, and LN data"
+"Access Search Engine", "Performs advanced search and filtering across Prefix, GIN, and LN datasets", "Medium", 10, 0, 0, 0, 0, 0
+"Record Viewer", "Displays record details, including basic/full data and hierarchy", "Medium", 8, 0, 0, 0, 0, 0
+"Subscription Manager", "Handles subscription requests for accessing full record views", "High", 15, 0, 0, 0, 0, 0
