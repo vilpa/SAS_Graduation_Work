@@ -18,28 +18,28 @@ container <name> [description] [technology] [tags] {
         sap = softwareSystem "SAP" "External ERP system"
         quickbooks = softwareSystem "QuickBooks" "External financial system"
 
-        group "Azure Services" {
-            communicationServices   = softwareSystem "Azure Communication Services" "ACS, tDevOps"
-            logicApps               = softwareSystem "Logic Apps" "Outbound webhooks/Teams/Slack" "LogicApps, tDevOps"
-            functions               = softwareSystem "Azure Functions" "Stateless processing" "Functions, tDevOps"
-            serviceBus              = softwareSystem "Azure Service Bus" "Retry & DLQ queues" "ServiceBus, Queue, tDevOps"
-            applicationInsights     = softwareSystem "Application Insights" "Telemetry & metrics" "AppInsights, tDevOps"
-            cosmosDB                = softwareSystem "Azure Cosmos DB" "Prefs, topics, templates" "CosmosDB, Database, tDevOps, tDBA"
-            cosmosDBfeedbacks       = softwareSystem "Azure Cosmos DB (feedbacks)" "Feedbacks" "CosmosDB, Database, tDevOps, tDBA"
-            key_vault               = softwareSystem "Azure Key Vault" "Secure secret and credential storage" "KeyVault, tDevOps"
-            azure_monitor           = softwareSystem "Azure Monitor" "Observability and metrics platform" "Monitor,tDevOps"
-            eventHubs               = softwareSystem "Azure Event Hubs" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub, tDevOps"            
-            eventHubs2              = softwareSystem "Azure Event Hubs (CDC)" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub, tDevOps"            
+        azsystem = softwareSystem "Azure Services" {
+            communicationServices   = container "Azure Communication Services" "ACS, tDevOps, Microsoft Azure - Azure Communication Services"
+            logicApps               = container "Logic Apps" "Outbound webhooks/Teams/Slack" "LogicApps, tDevOps, Microsoft Azure - Logic Apps"
+            functions               = container "Azure Functions" "Stateless processing" "Functions, tDevOps, Microsoft Azure - Function Apps"
+            serviceBus              = container "Azure Service Bus" "Retry & DLQ queues" "ServiceBus, Queue, tDevOps, Microsoft Azure - Azure Service Bus"
+            applicationInsights     = container "Application Insights" "Telemetry & metrics" "AppInsights, tDevOps, Microsoft Azure - Application Insights"
+            cosmosDB                = container "Azure Cosmos DB" "Prefs, topics, templates" "CosmosDB, Database, tDevOps, tDBA, Microsoft Azure - Azure Cosmos DB"
+            cosmosDBfeedbacks       = container "Azure Cosmos DB (feedbacks)" "Feedbacks" "CosmosDB, Database, tDevOps, tDBA, Microsoft Azure - Azure Cosmos DB"
+            key_vault               = container "Azure Key Vault" "Secure secret and credential storage" "KeyVault, tDevOps, Microsoft Azure - Key Vaults"
+            azure_monitor           = container "Azure Monitor" "Observability and metrics platform" "tDevOps, Microsoft Azure - Monitor"
+            eventHubs               = container "Azure Event Hubs" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub, tDevOps, Microsoft Azure - Event Hubs"            
+            eventHubs2              = container "Azure Event Hubs (CDC)" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub, tDevOps, Microsoft Azure - Event Hubs"            
 
-            graph_db                = softwareSystem "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures" "CosmosDB, Database, tDevOps, tDBA"
-            helpBlobStorage         = softwareSystem "Azure Blob Storage" "Stores help videos, documents, and media assets for tutorials and training" "BlobStorage, tDevOps"
+            graph_db                = container "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures" "CosmosDB, Database, tDevOps, tDBA, Microsoft Azure - Azure Cosmos DB"
+            helpBlobStorage         = container "Azure Blob Storage" "Stores help videos, documents, and media assets for tutorials and training" "BlobStorage, tDevOps"
             
             // Lightweight Reporting Subsystem (ADX + Power BI)
             // Azure systems (if not already declared elsewhere)
-            adx                     = softwareSystem "Azure Data Explorer" "Fast time-series analytics over API usage (Kusto)" "ADX, tDevOps" 
-            logAnalytics            = softwareSystem "Azure Log Analytics" "Central store for APIM diagnostics and metrics (KQL)" "LogAnalytics, tDevOps"
-            eventHubs3              = softwareSystem "Azure Event Hubs (APIM)" "Optional streaming path for high-volume APIM diagnostics" "EventHub, tDevOps"
-            powerBI                 = softwareSystem "Power BI" "Self-service BI dashboards and scheduled reports" "PowerBI, tDBD"
+            adx                     = container "Azure Data Explorer" "Fast time-series analytics over API usage (Kusto)" "ADX, tDevOps" 
+            logAnalytics            = container "Azure Log Analytics" "Central store for APIM diagnostics and metrics (KQL)" "LogAnalytics, tDevOps"
+            eventHubs3              = container "Azure Event Hubs (APIM)" "Optional streaming path for high-volume APIM diagnostics" "EventHub, tDevOps"
+            powerBI                 = container "Power BI" "Self-service BI dashboards and scheduled reports" "PowerBI, tDBD"
 
             functions -> cosmosDB "reads changes from Cosmos"
             functions -> eventHubs "emits events"
@@ -588,6 +588,86 @@ container <name> [description] [technology] [tags] {
 
             webapp -> apiGateway "Communicates via REST"
         }
+    
+        development = deploymentEnvironment "Development" {
+
+            deploymentNode "Azure Subscription - X-Customer" {
+                tags "Azure, Microsoft Azure - Subscriptions"
+
+                deploymentNode "Azure Region - Primary (East US)" {
+                    tags "Microsoft Azure - Region Management"
+
+
+                    deploymentNode "Virtual Network" {
+                        tags "Microsoft Azure - Virtual Networks"
+                    
+                    
+                        deploymentNode "APIM subnet" {
+                            tags "Microsoft Azure - Virtual Networks"
+                    
+                            // Ingress
+                            deploymentNode "Azure API Management (APIM)" {
+                                tags "Microsoft Azure - API Management Services"
+                                // routes external partner calls to Integration Gateway API
+                                containerInstance apiGateway
+                            }
+
+                            deploymentNode "Cosmos DB" {
+                                tags "Azure Cosmos DB, Microsoft Azure - Azure Cosmos DB"
+                                // routes external partner calls to Integration Gateway API
+                                containerInstance cosmosDB
+                            }
+                        }
+
+                        deploymentNode "Services subnet" {
+                            tags "Microsoft Azure - Virtual Networks"
+
+                            // Compute tier for Integration Gateway
+                            deploymentNode "AKS Cluster - ig-aks" {
+                                tags "AKS, Kubernetes, Compute"
+
+                                containerInstance integration
+                            }
+                        }
+
+/*
+            communicationServices   = container "Azure Communication Services" "ACS, tDevOps, Microsoft Azure - Azure Communication Services"
+            logicApps               = container "Logic Apps" "Outbound webhooks/Teams/Slack" "LogicApps, tDevOps, Microsoft Azure - Logic Apps"
+            functions               = container "Azure Functions" "Stateless processing" "Functions, tDevOps, Microsoft Azure - Function Apps"
+            serviceBus              = container "Azure Service Bus" "Retry & DLQ queues" "ServiceBus, Queue, tDevOps, Microsoft Azure - Azure Service Bus"
+            applicationInsights     = container "Application Insights" "Telemetry & metrics" "AppInsights, tDevOps, Microsoft Azure - Application Insights"
+            cosmosDB                = container "Azure Cosmos DB" "Prefs, topics, templates" "CosmosDB, Database, tDevOps, tDBA, Microsoft Azure - Azure Cosmos DB"
+            cosmosDBfeedbacks       = container "Azure Cosmos DB (feedbacks)" "Feedbacks" "CosmosDB, Database, tDevOps, tDBA, Microsoft Azure - Azure Cosmos DB"
+            key_vault               = container "Azure Key Vault" "Secure secret and credential storage" "KeyVault, tDevOps, Microsoft Azure - Key Vaults"
+            azure_monitor           = container "Azure Monitor" "Observability and metrics platform" "tDevOps, Microsoft Azure - Monitor"
+            eventHubs               = container "Azure Event Hubs" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub, tDevOps, Microsoft Azure - Event Hubs"            
+            eventHubs2              = container "Azure Event Hubs (CDC)" "Scalable event streaming platform for ingesting and processing CDC and business events in near real-time" "EventHub, tDevOps, Microsoft Azure - Event Hubs"            
+
+            graph_db                = container "Graph Database (Cosmos DB Gremlin API)" "Stores hierarchical GIN structures" "CosmosDB, Database, tDevOps, tDBA, Microsoft Azure - Azure Cosmos DB"
+            helpBlobStorage         = container "Azure Blob Storage" "Stores help videos, documents, and media assets for tutorials and training" "BlobStorage, tDevOps"
+            
+            // Lightweight Reporting Subsystem (ADX + Power BI)
+            // Azure systems (if not already declared elsewhere)
+            adx                     = container "Azure Data Explorer" "Fast time-series analytics over API usage (Kusto)" "ADX, tDevOps" 
+            logAnalytics            = container "Azure Log Analytics" "Central store for APIM diagnostics and metrics (KQL)" "LogAnalytics, tDevOps"
+            eventHubs3              = container "Azure Event Hubs (APIM)" "Optional streaming path for high-volume APIM diagnostics" "EventHub, tDevOps"
+            powerBI                 = container "Power BI" "Self-service BI dashboards and scheduled reports" "PowerBI, tDBD"
+
+*/
+                    }
+                }
+                deploymentNode "Monitoring" {
+                    deploymentNode "Azure Monitor" {
+                        tags "Microsoft Azure - Monitor"
+                        containerInstance azure_monitor 
+                    }
+                    deploymentNode "Application Insights" {
+                        tags "Microsoft Azure - Application Insights"
+                        containerInstance applicationInsights 
+                    }
+                }
+            }
+        }
     }
 
     views {
@@ -596,9 +676,17 @@ container <name> [description] [technology] [tags] {
             autolayout
         }
 
+        systemcontext azsystem "AzSystemContext" {
+            include *
+        }
+        
         container xsystem "ContainerDiagram" {
             include *
-            exclude logAnalytics eventHubs3 powerBI
+            exclude logAnalytics eventHubs3 powerBI azsystem
+        }
+
+        container azsystem "AzContainerDiagram" {
+            include *
         }
 
         component userMgmt "UserMgmtComponents" {
@@ -682,6 +770,9 @@ container <name> [description] [technology] [tags] {
             include *
         }
         
+        deployment * development {
+            include *
+        }
         
         styles {
             element "Person" {
@@ -733,5 +824,7 @@ container <name> [description] [technology] [tags] {
                 shape Pipe
             }
         }
+    
+        theme https://static.structurizr.com/themes/microsoft-azure-2021.01.26/theme.json
     }
 }
